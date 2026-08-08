@@ -1,2 +1,2 @@
 pub mod das;
-pub mod kem;
+pub mod kem_api;

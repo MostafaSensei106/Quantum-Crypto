@@ -6,16 +6,24 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-Future<KeyPairDto> mlKem768GenerateKeyPair() =>
-    RustLib.instance.api.crateApiKemMlKem768GenerateKeyPair();
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
 
-Future<EncapsulationDto> mlKem768Encapsulate({required List<int> publicKey}) =>
-    RustLib.instance.api.crateApiKemMlKem768Encapsulate(publicKey: publicKey);
+Future<KeyPairDto> generateKemKeypair(
+        {required TargetKemAlgorithm algorithm}) =>
+    RustLib.instance.api.crateApiKemApiGenerateKemKeypair(algorithm: algorithm);
 
-Future<Uint8List> mlKem768Decapsulate(
-        {required List<int> ciphertext, required List<int> secretKey}) =>
-    RustLib.instance.api.crateApiKemMlKem768Decapsulate(
-        ciphertext: ciphertext, secretKey: secretKey);
+Future<EncapsulationDto> kemEncapsulate(
+        {required TargetKemAlgorithm algorithm,
+        required List<int> publicKey}) =>
+    RustLib.instance.api.crateApiKemApiKemEncapsulate(
+        algorithm: algorithm, publicKey: publicKey);
+
+Future<Uint8List> kemDecapsulate(
+        {required TargetKemAlgorithm algorithm,
+        required List<int> ciphertext,
+        required List<int> secretKey}) =>
+    RustLib.instance.api.crateApiKemApiKemDecapsulate(
+        algorithm: algorithm, ciphertext: ciphertext, secretKey: secretKey);
 
 class EncapsulationDto {
   final Uint8List ciphertext;
@@ -57,4 +65,11 @@ class KeyPairDto {
           runtimeType == other.runtimeType &&
           publicKey == other.publicKey &&
           secretKey == other.secretKey;
+}
+
+enum TargetKemAlgorithm {
+  mlKem512,
+  mlKem768,
+  mlKem1024,
+  ;
 }

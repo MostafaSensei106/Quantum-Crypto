@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/kem_api.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -67,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -291292710;
+  int get rustContentHash => -1701494362;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -78,7 +79,18 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   );
 }
 
-abstract class RustLibApi extends BaseApi {}
+abstract class RustLibApi extends BaseApi {
+  Future<KeyPairDto> crateApiKemApiGenerateKemKeypair(
+      {required TargetKemAlgorithm algorithm});
+
+  Future<Uint8List> crateApiKemApiKemDecapsulate(
+      {required TargetKemAlgorithm algorithm,
+      required List<int> ciphertext,
+      required List<int> secretKey});
+
+  Future<EncapsulationDto> crateApiKemApiKemEncapsulate(
+      {required TargetKemAlgorithm algorithm, required List<int> publicKey});
+}
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   RustLibApiImpl({
@@ -88,10 +100,205 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required super.portManager,
   });
 
+  @override
+  Future<KeyPairDto> crateApiKemApiGenerateKemKeypair(
+      {required TargetKemAlgorithm algorithm}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_target_kem_algorithm(algorithm, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 1, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_key_pair_dto,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiKemApiGenerateKemKeypairConstMeta,
+      argValues: [algorithm],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiKemApiGenerateKemKeypairConstMeta =>
+      const TaskConstMeta(
+        debugName: "generate_kem_keypair",
+        argNames: ["algorithm"],
+      );
+
+  @override
+  Future<Uint8List> crateApiKemApiKemDecapsulate(
+      {required TargetKemAlgorithm algorithm,
+      required List<int> ciphertext,
+      required List<int> secretKey}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_target_kem_algorithm(algorithm, serializer);
+        sse_encode_list_prim_u_8_loose(ciphertext, serializer);
+        sse_encode_list_prim_u_8_loose(secretKey, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 2, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_u_8_strict,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiKemApiKemDecapsulateConstMeta,
+      argValues: [algorithm, ciphertext, secretKey],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiKemApiKemDecapsulateConstMeta =>
+      const TaskConstMeta(
+        debugName: "kem_decapsulate",
+        argNames: ["algorithm", "ciphertext", "secretKey"],
+      );
+
+  @override
+  Future<EncapsulationDto> crateApiKemApiKemEncapsulate(
+      {required TargetKemAlgorithm algorithm, required List<int> publicKey}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_target_kem_algorithm(algorithm, serializer);
+        sse_encode_list_prim_u_8_loose(publicKey, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 3, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_encapsulation_dto,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiKemApiKemEncapsulateConstMeta,
+      argValues: [algorithm, publicKey],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiKemApiKemEncapsulateConstMeta =>
+      const TaskConstMeta(
+        debugName: "kem_encapsulate",
+        argNames: ["algorithm", "publicKey"],
+      );
+
+  @protected
+  String dco_decode_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as String;
+  }
+
+  @protected
+  EncapsulationDto dco_decode_encapsulation_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return EncapsulationDto(
+      ciphertext: dco_decode_list_prim_u_8_strict(arr[0]),
+      sharedSecret: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
+  }
+
+  @protected
+  int dco_decode_i_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  KeyPairDto dco_decode_key_pair_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return KeyPairDto(
+      publicKey: dco_decode_list_prim_u_8_strict(arr[0]),
+      secretKey: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
+  }
+
+  @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as List<int>;
+  }
+
+  @protected
+  Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Uint8List;
+  }
+
+  @protected
+  TargetKemAlgorithm dco_decode_target_kem_algorithm(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TargetKemAlgorithm.values[raw as int];
+  }
+
+  @protected
+  int dco_decode_u_8(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  String sse_decode_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_list_prim_u_8_strict(deserializer);
+    return utf8.decoder.convert(inner);
+  }
+
+  @protected
+  EncapsulationDto sse_decode_encapsulation_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_ciphertext = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_sharedSecret = sse_decode_list_prim_u_8_strict(deserializer);
+    return EncapsulationDto(
+        ciphertext: var_ciphertext, sharedSecret: var_sharedSecret);
+  }
+
   @protected
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
+  }
+
+  @protected
+  KeyPairDto sse_decode_key_pair_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_publicKey = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_secretKey = sse_decode_list_prim_u_8_strict(deserializer);
+    return KeyPairDto(publicKey: var_publicKey, secretKey: var_secretKey);
+  }
+
+  @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  TargetKemAlgorithm sse_decode_target_kem_algorithm(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TargetKemAlgorithm.values[inner];
+  }
+
+  @protected
+  int sse_decode_u_8(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8();
   }
 
   @protected
@@ -101,9 +308,60 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_String(String self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
+  }
+
+  @protected
+  void sse_encode_encapsulation_dto(
+      EncapsulationDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.ciphertext, serializer);
+    sse_encode_list_prim_u_8_strict(self.sharedSecret, serializer);
+  }
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
+  }
+
+  @protected
+  void sse_encode_key_pair_dto(KeyPairDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.publicKey, serializer);
+    sse_encode_list_prim_u_8_strict(self.secretKey, serializer);
+  }
+
+  @protected
+  void sse_encode_list_prim_u_8_loose(
+      List<int> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer
+        .putUint8List(self is Uint8List ? self : Uint8List.fromList(self));
+  }
+
+  @protected
+  void sse_encode_list_prim_u_8_strict(
+      Uint8List self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_target_kem_algorithm(
+      TargetKemAlgorithm self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_u_8(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self);
   }
 
   @protected
