@@ -1,56 +1,111 @@
-use pqcrypto_mlkem::mlkem768;
+use crate::core::traits::{EncapsulationResult, KemStrategy, KeyPair, SecretKeyContainer};
+use pqcrypto_mlkem::{mlkem1024, mlkem512, mlkem768};
 use pqcrypto_traits::kem::{Ciphertext, PublicKey, SecretKey, SharedSecret};
-use zeroize::ZeroizeOnDrop;
 
-#[derive(ZeroizeOnDrop)]
-pub struct MlKem768SecretWrapper {
-    pub bytes: Vec<u8>,
+pub enum MlKemVariant {
+    MlKem512,
+    MlKem768,
+    MlKem1024,
 }
 
-pub struct MlKem768KeyPair {
-    pub public_key: Vec<u8>,
-    pub secret_key: Vec<u8>,
+pub struct MlKemStrategy {
+    variant: MlKemVariant,
 }
 
-pub struct MlKem768Encapsulation {
-    pub ciphertext: Vec<u8>,
-    pub shared_secret: Vec<u8>,
+impl MlKemStrategy {
+    pub fn new(variant: MlKemVariant) -> Self {
+        Self { variant }
+    }
 }
 
-/// Key Generation
-pub fn generate_keypair_768() -> MlKem768KeyPair {
-    let (pk, sk) = mlkem768::keypair();
-    return MlKem768KeyPair {
-        public_key: pk.as_bytes().to_vec(),
-        secret_key: sk.as_bytes().to_vec(),
-    };
-}
+impl KemStrategy for MlKemStrategy {
+    fn generate_keypair(&self) -> Result<KeyPair, String> {
+        match self.variant {
+            MlKemVariant::MlKem512 => {
+                let (pk, sk) = mlkem512::keypair();
+                Ok(KeyPair {
+                    public_key: pk.as_bytes().to_vec(),
+                    secret_key: SecretKeyContainer {
+                        bytes: sk.as_bytes().to_vec(),
+                    },
+                })
+            }
+            MlKemVariant::MlKem768 => {
+                let (pk, sk) = mlkem768::keypair();
+                Ok(KeyPair {
+                    public_key: pk.as_bytes().to_vec(),
+                    secret_key: SecretKeyContainer {
+                        bytes: sk.as_bytes().to_vec(),
+                    },
+                })
+            }
+            MlKemVariant::MlKem1024 => {
+                let (pk, sk) = mlkem1024::keypair();
+                Ok(KeyPair {
+                    public_key: pk.as_bytes().to_vec(),
+                    secret_key: SecretKeyContainer {
+                        bytes: sk.as_bytes().to_vec(),
+                    },
+                })
+            }
+        }
+    }
 
-/// Encapsulation
-pub fn encapsulate_768(public_key_bytes: &[u8]) -> Result<MlKem768Encapsulation, String> {
-    let pk = mlkem768::PublicKey::from_bytes(public_key_bytes)
-        .map_err(|_| "Failed to parse public key for ML-KEM-768".to_string())?;
+    fn encapsulate(&self, public_key: &[u8]) -> Result<EncapsulationResult, String> {
+        match self.variant {
+            MlKemVariant::MlKem512 => {
+                let pk = mlkem512::PublicKey::from_bytes(public_key)
+                    .map_err(|_| "Invalid public key for ML-KEM-512".to_string())?;
+                let (ss, ct) = mlkem512::encapsulate(&pk);
+                Ok(EncapsulationResult {
+                    ciphertext: ct.as_bytes().to_vec(),
+                    shared_secret: ss.as_bytes().to_vec(),
+                })
+            }
+            MlKemVariant::MlKem768 => {
+                let pk = mlkem768::PublicKey::from_bytes(public_key)
+                    .map_err(|_| "Invalid public key for ML-KEM-768".to_string())?;
+                let (ss, ct) = mlkem768::encapsulate(&pk);
+                Ok(EncapsulationResult {
+                    ciphertext: ct.as_bytes().to_vec(),
+                    shared_secret: ss.as_bytes().to_vec(),
+                })
+            }
+            MlKemVariant::MlKem1024 => {
+                let pk = mlkem1024::PublicKey::from_bytes(public_key)
+                    .map_err(|_| "Invalid public key for ML-KEM-1024".to_string())?;
+                let (ss, ct) = mlkem1024::encapsulate(&pk);
+                Ok(EncapsulationResult {
+                    ciphertext: ct.as_bytes().to_vec(),
+                    shared_secret: ss.as_bytes().to_vec(),
+                })
+            }
+        }
+    }
 
-    let (ss, ct) = mlkem768::encapsulate(&pk);
-
-    Ok(MlKem768Encapsulation {
-        ciphertext: ct.as_bytes().to_vec(),
-        shared_secret: ss.as_bytes().to_vec(),
-    })
-}
-
-/// Decapsulation
-pub fn decapsulate_768(
-    secret_key_bytes: &[u8],
-    ciphertext_bytes: &[u8],
-) -> Result<Vec<u8>, String> {
-    let ct = mlkem768::Ciphertext::from_bytes(ciphertext_bytes)
-        .map_err(|_| "Failed to parse ciphertext for ML-KEM-768".to_string())?;
-
-    let sk = mlkem768::SecretKey::from_bytes(secret_key_bytes)
-        .map_err(|_| "Failed to parse secret key for ML-KEM-768".to_string())?;
-
-    let ss = mlkem768::decapsulate(&ct, &sk);
-
-    Ok(ss.as_bytes().to_vec())
+    fn decapsulate(&self, ciphertext: &[u8], secret_key: &[u8]) -> Result<Vec<u8>, String> {
+        match self.variant {
+            MlKemVariant::MlKem512 => {
+                let ct = mlkem512::Ciphertext::from_bytes(ciphertext)
+                    .map_err(|_| "Invalid ciphertext for ML-KEM-512".to_string())?;
+                let sk = mlkem512::SecretKey::from_bytes(secret_key)
+                    .map_err(|_| "Invalid secret key for ML-KEM-512".to_string())?;
+                Ok(mlkem512::decapsulate(&ct, &sk).as_bytes().to_vec())
+            }
+            MlKemVariant::MlKem768 => {
+                let ct = mlkem768::Ciphertext::from_bytes(ciphertext)
+                    .map_err(|_| "Invalid ciphertext for ML-KEM-768".to_string())?;
+                let sk = mlkem768::SecretKey::from_bytes(secret_key)
+                    .map_err(|_| "Invalid secret key for ML-KEM-768".to_string())?;
+                Ok(mlkem768::decapsulate(&ct, &sk).as_bytes().to_vec())
+            }
+            MlKemVariant::MlKem1024 => {
+                let ct = mlkem1024::Ciphertext::from_bytes(ciphertext)
+                    .map_err(|_| "Invalid ciphertext for ML-KEM-1024".to_string())?;
+                let sk = mlkem1024::SecretKey::from_bytes(secret_key)
+                    .map_err(|_| "Invalid secret key for ML-KEM-1024".to_string())?;
+                Ok(mlkem1024::decapsulate(&ct, &sk).as_bytes().to_vec())
+            }
+        }
+    }
 }
