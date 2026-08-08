@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/dsa_api.dart';
 import 'api/kem_api.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -68,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -1701494362;
+  int get rustContentHash => -1089582729;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -80,6 +81,20 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<Uint8List> crateApiDsaApiDsaSign(
+      {required TargetDsaAlgorithm algorithm,
+      required List<int> message,
+      required List<int> secretKey});
+
+  Future<bool> crateApiDsaApiDsaVerify(
+      {required TargetDsaAlgorithm algorithm,
+      required List<int> message,
+      required List<int> signature,
+      required List<int> publicKey});
+
+  Future<DsaKeyPairDto> crateApiDsaApiGenerateDsaKeypair(
+      {required TargetDsaAlgorithm algorithm});
+
   Future<KeyPairDto> crateApiKemApiGenerateKemKeypair(
       {required TargetKemAlgorithm algorithm});
 
@@ -101,6 +116,92 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<Uint8List> crateApiDsaApiDsaSign(
+      {required TargetDsaAlgorithm algorithm,
+      required List<int> message,
+      required List<int> secretKey}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_target_dsa_algorithm(algorithm, serializer);
+        sse_encode_list_prim_u_8_loose(message, serializer);
+        sse_encode_list_prim_u_8_loose(secretKey, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 1, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_u_8_strict,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiDsaApiDsaSignConstMeta,
+      argValues: [algorithm, message, secretKey],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiDsaApiDsaSignConstMeta => const TaskConstMeta(
+        debugName: "dsa_sign",
+        argNames: ["algorithm", "message", "secretKey"],
+      );
+
+  @override
+  Future<bool> crateApiDsaApiDsaVerify(
+      {required TargetDsaAlgorithm algorithm,
+      required List<int> message,
+      required List<int> signature,
+      required List<int> publicKey}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_target_dsa_algorithm(algorithm, serializer);
+        sse_encode_list_prim_u_8_loose(message, serializer);
+        sse_encode_list_prim_u_8_loose(signature, serializer);
+        sse_encode_list_prim_u_8_loose(publicKey, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 2, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_bool,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiDsaApiDsaVerifyConstMeta,
+      argValues: [algorithm, message, signature, publicKey],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiDsaApiDsaVerifyConstMeta => const TaskConstMeta(
+        debugName: "dsa_verify",
+        argNames: ["algorithm", "message", "signature", "publicKey"],
+      );
+
+  @override
+  Future<DsaKeyPairDto> crateApiDsaApiGenerateDsaKeypair(
+      {required TargetDsaAlgorithm algorithm}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_target_dsa_algorithm(algorithm, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 3, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_dsa_key_pair_dto,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiDsaApiGenerateDsaKeypairConstMeta,
+      argValues: [algorithm],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiDsaApiGenerateDsaKeypairConstMeta =>
+      const TaskConstMeta(
+        debugName: "generate_dsa_keypair",
+        argNames: ["algorithm"],
+      );
+
+  @override
   Future<KeyPairDto> crateApiKemApiGenerateKemKeypair(
       {required TargetKemAlgorithm algorithm}) {
     return handler.executeNormal(NormalTask(
@@ -108,7 +209,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_target_kem_algorithm(algorithm, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 1, port: port_);
+            funcId: 4, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_key_pair_dto,
@@ -138,7 +239,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_list_prim_u_8_loose(ciphertext, serializer);
         sse_encode_list_prim_u_8_loose(secretKey, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 2, port: port_);
+            funcId: 5, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -165,7 +266,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_target_kem_algorithm(algorithm, serializer);
         sse_encode_list_prim_u_8_loose(publicKey, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 3, port: port_);
+            funcId: 6, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_encapsulation_dto,
@@ -187,6 +288,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   String dco_decode_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as String;
+  }
+
+  @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
+  DsaKeyPairDto dco_decode_dsa_key_pair_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return DsaKeyPairDto(
+      publicKey: dco_decode_list_prim_u_8_strict(arr[0]),
+      secretKey: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
   }
 
   @protected
@@ -232,6 +351,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TargetDsaAlgorithm dco_decode_target_dsa_algorithm(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TargetDsaAlgorithm.values[raw as int];
+  }
+
+  @protected
   TargetKemAlgorithm dco_decode_target_kem_algorithm(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return TargetKemAlgorithm.values[raw as int];
@@ -248,6 +373,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_list_prim_u_8_strict(deserializer);
     return utf8.decoder.convert(inner);
+  }
+
+  @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  DsaKeyPairDto sse_decode_dsa_key_pair_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_publicKey = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_secretKey = sse_decode_list_prim_u_8_strict(deserializer);
+    return DsaKeyPairDto(publicKey: var_publicKey, secretKey: var_secretKey);
   }
 
   @protected
@@ -288,6 +427,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TargetDsaAlgorithm sse_decode_target_dsa_algorithm(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TargetDsaAlgorithm.values[inner];
+  }
+
+  @protected
   TargetKemAlgorithm sse_decode_target_kem_algorithm(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -302,15 +449,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
-  }
-
-  @protected
   void sse_encode_String(String self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(utf8.encoder.convert(self), serializer);
+  }
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_dsa_key_pair_dto(
+      DsaKeyPairDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.publicKey, serializer);
+    sse_encode_list_prim_u_8_strict(self.secretKey, serializer);
   }
 
   @protected
@@ -352,6 +507,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_target_dsa_algorithm(
+      TargetDsaAlgorithm self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_target_kem_algorithm(
       TargetKemAlgorithm self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -362,11 +524,5 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_u_8(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self);
-  }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
   }
 }
