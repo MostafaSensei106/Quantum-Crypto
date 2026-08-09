@@ -103,3 +103,82 @@ pub fn decrypt_then_verify(
         Err("Signature verification failed".to_string())
     }
 }
+
+pub struct EncryptThenSignPackageDto {
+    pub mlkem_ciphertext: Vec<u8>,
+    pub x25519_ephemeral_pk: Vec<u8>,
+    pub encrypted_payload: Vec<u8>,
+    pub signature: Vec<u8>,
+    pub dsa_algorithm: TargetDsaAlgorithm,
+    pub kem_algorithm: TargetHybridKemAlgorithm,
+    pub aead_algorithm: TargetAeadAlgorithm,
+}
+
+pub fn encrypt_then_sign(
+    dsa_algorithm: TargetDsaAlgorithm,
+    kem_algorithm: TargetHybridKemAlgorithm,
+    aead_algorithm: TargetAeadAlgorithm,
+    message: Vec<u8>,
+    sender_dsa_secret_key: Vec<u8>,
+    recipient_mlkem_public_key: Vec<u8>,
+    recipient_x25519_public_key: Vec<u8>,
+) -> Result<EncryptThenSignPackageDto, String> {
+    // 1. Encapsulate
+    let kem_engine = HybridKemEngine::new(kem_algorithm.into());
+    let enc_result =
+        kem_engine.encapsulate(&recipient_mlkem_public_key, &recipient_x25519_public_key)?;
+
+    // 2. Encrypt
+    let aead_engine = AeadEngine::new(aead_algorithm.into());
+    let encrypted_payload = aead_engine.encrypt(&enc_result.shared_secret, &message)?;
+
+    // 3. Sign
+    let dsa_strategy = DsaFactory::create_strategy(dsa_algorithm.into());
+    let signature = dsa_strategy.sign(&encrypted_payload, &sender_dsa_secret_key)?;
+
+    Ok(EncryptThenSignPackageDto {
+        mlkem_ciphertext: enc_result.mlkem_ciphertext,
+        x25519_ephemeral_pk: enc_result.x25519_ephemeral_pk,
+        encrypted_payload,
+        signature,
+        dsa_algorithm,
+        kem_algorithm,
+        aead_algorithm,
+    })
+}
+
+pub fn verify_then_decrypt(
+    package_mlkem_ciphertext: Vec<u8>,
+    package_x25519_ephemeral_pk: Vec<u8>,
+    package_encrypted_payload: Vec<u8>,
+    package_signature: Vec<u8>,
+    dsa_algorithm: TargetDsaAlgorithm,
+    kem_algorithm: TargetHybridKemAlgorithm,
+    aead_algorithm: TargetAeadAlgorithm,
+    recipient_mlkem_secret_key: Vec<u8>,
+    recipient_x25519_secret_key: Vec<u8>,
+    sender_dsa_public_key: Vec<u8>,
+) -> Result<Vec<u8>, String> {
+    // 1. Verify
+    let dsa_strategy = DsaFactory::create_strategy(dsa_algorithm.into());
+    let is_valid = dsa_strategy.verify(&package_encrypted_payload, &package_signature, &sender_dsa_public_key)?;
+
+    if !is_valid {
+        return Err("Signature verification failed".to_string());
+    }
+
+    // 2. Decapsulate
+    let kem_engine = HybridKemEngine::new(kem_algorithm.into());
+    let shared_secret = kem_engine.decapsulate(
+        &package_mlkem_ciphertext,
+        &package_x25519_ephemeral_pk,
+        &recipient_mlkem_secret_key,
+        &recipient_x25519_secret_key,
+    )?;
+
+    // 3. Decrypt
+    let aead_engine = AeadEngine::new(aead_algorithm.into());
+    let message = aead_engine.decrypt(&shared_secret, &package_encrypted_payload)?;
+
+    Ok(message)
+}

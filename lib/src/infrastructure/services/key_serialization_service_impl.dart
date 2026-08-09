@@ -1,8 +1,23 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:typed_data';
 import 'package:quantum_crypto/src/core/interfaces/key_serialization_service.dart';
 import '../../rust/api/key_serialization_api.dart' as rust_api;
 
-final class KeySerializationServiceImpl implements KeySerializationService {
+final
+
+    /// Internal implementation of `KeySerializationServiceImpl`.
+    ///
+    /// **Warning**: Do not use this class directly. Always interact with
+    /// the cryptographic functions via the [QuantumCrypto] facade to ensure
+    /// correct initialization and memory safety.
+    ///
+    /// Example:
+    /// ```dart
+    /// // Correct usage:
+    /// final result = await QuantumCrypto.kem.generateKeyPair(KemAlgorithm.mlKem768);
+    /// ```
+    class KeySerializationServiceImpl implements KeySerializationService {
+  /// Creates an internal instance of [KeySerializationServiceImpl].
   const KeySerializationServiceImpl();
 
   @override

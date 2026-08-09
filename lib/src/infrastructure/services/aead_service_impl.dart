@@ -1,9 +1,24 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:typed_data';
 import 'package:quantum_crypto/src/core/enums/aead_algorithm.dart';
 import 'package:quantum_crypto/src/core/interfaces/aead_service.dart';
 import '../../rust/api/aead_api.dart' as rust_api;
 
-final class AeadServiceImpl implements AeadService {
+final
+
+    /// Internal implementation of `AeadServiceImpl`.
+    ///
+    /// **Warning**: Do not use this class directly. Always interact with
+    /// the cryptographic functions via the [QuantumCrypto] facade to ensure
+    /// correct initialization and memory safety.
+    ///
+    /// Example:
+    /// ```dart
+    /// // Correct usage:
+    /// final result = await QuantumCrypto.kem.generateKeyPair(KemAlgorithm.mlKem768);
+    /// ```
+    class AeadServiceImpl implements AeadService {
+  /// Creates an internal instance of [AeadServiceImpl].
   const AeadServiceImpl();
 
   rust_api.TargetAeadAlgorithm _mapToRustAlgorithm(AeadAlgorithm algorithm) {

@@ -8,32 +8,38 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
 
-Future<HybridKeyPairDto> generateHybridKemKeypair(
-        {required TargetHybridKemAlgorithm algorithm}) =>
-    RustLib.instance.api
-        .crateApiHybridKemApiGenerateHybridKemKeypair(algorithm: algorithm);
+Future<HybridKeyPairDto> generateHybridKemKeypair({
+  required TargetHybridKemAlgorithm algorithm,
+}) =>
+    RustLib.instance.api.crateApiHybridKemApiGenerateHybridKemKeypair(
+      algorithm: algorithm,
+    );
 
-Future<HybridEncapsulationDto> hybridKemEncapsulate(
-        {required TargetHybridKemAlgorithm algorithm,
-        required List<int> mlkemPublicKey,
-        required List<int> x25519PublicKey}) =>
+Future<HybridEncapsulationDto> hybridKemEncapsulate({
+  required TargetHybridKemAlgorithm algorithm,
+  required List<int> mlkemPublicKey,
+  required List<int> x25519PublicKey,
+}) =>
     RustLib.instance.api.crateApiHybridKemApiHybridKemEncapsulate(
-        algorithm: algorithm,
-        mlkemPublicKey: mlkemPublicKey,
-        x25519PublicKey: x25519PublicKey);
+      algorithm: algorithm,
+      mlkemPublicKey: mlkemPublicKey,
+      x25519PublicKey: x25519PublicKey,
+    );
 
-Future<Uint8List> hybridKemDecapsulate(
-        {required TargetHybridKemAlgorithm algorithm,
-        required List<int> mlkemCiphertext,
-        required List<int> x25519EphemeralPk,
-        required List<int> mlkemSecretKey,
-        required List<int> x25519SecretKey}) =>
+Future<Uint8List> hybridKemDecapsulate({
+  required TargetHybridKemAlgorithm algorithm,
+  required List<int> mlkemCiphertext,
+  required List<int> x25519EphemeralPk,
+  required List<int> mlkemSecretKey,
+  required List<int> x25519SecretKey,
+}) =>
     RustLib.instance.api.crateApiHybridKemApiHybridKemDecapsulate(
-        algorithm: algorithm,
-        mlkemCiphertext: mlkemCiphertext,
-        x25519EphemeralPk: x25519EphemeralPk,
-        mlkemSecretKey: mlkemSecretKey,
-        x25519SecretKey: x25519SecretKey);
+      algorithm: algorithm,
+      mlkemCiphertext: mlkemCiphertext,
+      x25519EphemeralPk: x25519EphemeralPk,
+      mlkemSecretKey: mlkemSecretKey,
+      x25519SecretKey: x25519SecretKey,
+    );
 
 class HybridEncapsulationDto {
   final Uint8List mlkemCiphertext;
@@ -97,5 +103,4 @@ enum TargetHybridKemAlgorithm {
   mlKem512X25519,
   mlKem768X25519,
   mlKem1024X25519,
-  ;
 }

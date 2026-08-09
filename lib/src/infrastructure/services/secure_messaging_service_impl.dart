@@ -1,15 +1,29 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:typed_data';
 import 'package:quantum_crypto/src/core/enums/aead_algorithm.dart';
 import 'package:quantum_crypto/src/core/enums/dsa_algorithm.dart';
 import 'package:quantum_crypto/src/core/enums/hybrid_kem_algorithm.dart';
 import 'package:quantum_crypto/src/core/interfaces/secure_messaging_service.dart';
 import 'package:quantum_crypto/src/core/models/secure_package.dart';
+import 'package:quantum_crypto/src/core/models/encrypt_then_sign_package.dart';
 import '../../rust/api/secure_messaging_api.dart' as rust_api;
 import '../../rust/api/dsa_api.dart' as dsa_rust_api;
 import '../../rust/api/hybrid_kem_api.dart' as hybrid_rust_api;
 import '../../rust/api/aead_api.dart' as aead_rust_api;
 
+/// Internal implementation of `SecureMessagingServiceImpl`.
+///
+/// **Warning**: Do not use this class directly. Always interact with
+/// the cryptographic functions via the [QuantumCrypto] facade to ensure
+/// correct initialization and memory safety.
+///
+/// Example:
+/// ```dart
+/// // Correct usage:
+/// final result = await QuantumCrypto.kem.generateKeyPair(KemAlgorithm.mlKem768);
+/// ```
 final class SecureMessagingServiceImpl implements SecureMessagingService {
+  /// Creates an internal instance of [SecureMessagingServiceImpl].
   const SecureMessagingServiceImpl();
 
   @override
@@ -53,6 +67,59 @@ final class SecureMessagingServiceImpl implements SecureMessagingService {
       packageMlkemCiphertext: package.mlKemCiphertext,
       packageX25519EphemeralPk: package.x25519EphemeralPk,
       packageEncryptedPayload: package.encryptedPayload,
+      dsaAlgorithm: _mapDsaAlgorithm(package.dsaAlgorithm),
+      kemAlgorithm: _mapKemAlgorithm(package.kemAlgorithm),
+      aeadAlgorithm: _mapAeadAlgorithm(package.aeadAlgorithm),
+      recipientMlkemSecretKey: recipientMlKemSecretKey,
+      recipientX25519SecretKey: recipientX25519SecretKey,
+      senderDsaPublicKey: senderDsaPublicKey,
+    );
+    return Uint8List.fromList(result);
+  }
+
+  @override
+  Future<EncryptThenSignPackage> encryptAndSign({
+    required Uint8List message,
+    required Uint8List senderDsaSecretKey,
+    required Uint8List recipientMlKemPublicKey,
+    required Uint8List recipientX25519PublicKey,
+    DsaAlgorithm dsaAlgorithm = DsaAlgorithm.mlDsa65,
+    HybridKemAlgorithm kemAlgorithm = HybridKemAlgorithm.mlKem768X25519,
+    AeadAlgorithm aeadAlgorithm = AeadAlgorithm.aes256Gcm,
+  }) async {
+    final result = await rust_api.encryptThenSign(
+      dsaAlgorithm: _mapDsaAlgorithm(dsaAlgorithm),
+      kemAlgorithm: _mapKemAlgorithm(kemAlgorithm),
+      aeadAlgorithm: _mapAeadAlgorithm(aeadAlgorithm),
+      message: message,
+      senderDsaSecretKey: senderDsaSecretKey,
+      recipientMlkemPublicKey: recipientMlKemPublicKey,
+      recipientX25519PublicKey: recipientX25519PublicKey,
+    );
+
+    return EncryptThenSignPackage(
+      mlKemCiphertext: Uint8List.fromList(result.mlkemCiphertext),
+      x25519EphemeralPk: Uint8List.fromList(result.x25519EphemeralPk),
+      encryptedPayload: Uint8List.fromList(result.encryptedPayload),
+      signature: Uint8List.fromList(result.signature),
+      dsaAlgorithm: dsaAlgorithm,
+      kemAlgorithm: kemAlgorithm,
+      aeadAlgorithm: aeadAlgorithm,
+    );
+  }
+
+  @override
+  Future<Uint8List> verifyAndDecrypt({
+    required EncryptThenSignPackage package,
+    required Uint8List recipientMlKemSecretKey,
+    required Uint8List recipientX25519SecretKey,
+    required Uint8List senderDsaPublicKey,
+  }) async {
+    final result = await rust_api.verifyThenDecrypt(
+      packageMlkemCiphertext: package.mlKemCiphertext,
+      packageX25519EphemeralPk: package.x25519EphemeralPk,
+      packageEncryptedPayload: package.encryptedPayload,
+      packageSignature: package.signature,
       dsaAlgorithm: _mapDsaAlgorithm(package.dsaAlgorithm),
       kemAlgorithm: _mapKemAlgorithm(package.kemAlgorithm),
       aeadAlgorithm: _mapAeadAlgorithm(package.aeadAlgorithm),

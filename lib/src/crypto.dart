@@ -10,9 +10,17 @@ import 'package:quantum_crypto/src/infrastructure/services/key_serialization_ser
 import 'package:quantum_crypto/src/infrastructure/services/ml_dsa_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/ml_kem_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/secure_messaging_service_impl.dart';
+import 'package:quantum_crypto/src/core/interfaces/streaming_service.dart';
+import 'package:quantum_crypto/src/infrastructure/services/streaming_service_impl.dart';
+import 'package:quantum_crypto/src/core/interfaces/kdf_service.dart';
+import 'package:quantum_crypto/src/infrastructure/services/kdf_service_impl.dart';
+import 'package:quantum_crypto/src/core/interfaces/seed_service.dart';
+import 'package:quantum_crypto/src/infrastructure/services/seed_service_impl.dart';
+import 'package:quantum_crypto/src/core/interfaces/benchmark_service.dart';
+import 'package:quantum_crypto/src/infrastructure/services/benchmark_service_impl.dart';
 import 'package:quantum_crypto/src/rust/frb_generated.dart';
 
-/// PqCrypto — Unified Post-Quantum Cryptography Facade.
+/// QuantumCrypto — Unified Post-Quantum Cryptography Facade.
 ///
 /// Provides both high-level and low-level access to:
 /// - ML-KEM (Key Encapsulation)
@@ -24,6 +32,18 @@ import 'package:quantum_crypto/src/rust/frb_generated.dart';
 abstract final class QuantumCrypto {
   static bool _isInitialized = false;
 
+  /// Initializes the underlying Rust FFI bridge and cryptographic context.
+  ///
+  /// **WARNING**: This must be called before performing any cryptographic operations.
+  /// Failure to do so may result in native bridge errors.
+  ///
+  /// Example:
+  /// ```dart
+  /// void main() async {
+  ///   await QuantumCrypto.init();
+  ///   runApp(MyApp());
+  /// }
+  /// ```
   static Future<void> init() async {
     if (_isInitialized) return;
     await RustLib.init();
@@ -50,4 +70,16 @@ abstract final class QuantumCrypto {
 
   /// Secure messaging: Sign-then-Encrypt / Decrypt-then-Verify.
   static const SecureMessagingService messaging = SecureMessagingServiceImpl();
+
+  /// Streaming AEAD encryption service for large files.
+  static const StreamingService streaming = StreamingServiceImpl();
+
+  /// HKDF key derivation service.
+  static const KdfService kdf = KdfServiceImpl();
+
+  /// Seed-based deterministic key derivation service.
+  static const SeedService seed = SeedServiceImpl();
+
+  /// Cryptographic benchmark suite.
+  static const BenchmarkService benchmark = BenchmarkServiceImpl();
 }

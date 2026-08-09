@@ -8,24 +8,26 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
 
-Future<Uint8List> aeadEncrypt(
-        {required TargetAeadAlgorithm algorithm,
-        required List<int> key,
-        required List<int> plaintext}) =>
+Future<Uint8List> aeadEncrypt({
+  required TargetAeadAlgorithm algorithm,
+  required List<int> key,
+  required List<int> plaintext,
+}) =>
     RustLib.instance.api.crateApiAeadApiAeadEncrypt(
-        algorithm: algorithm, key: key, plaintext: plaintext);
+      algorithm: algorithm,
+      key: key,
+      plaintext: plaintext,
+    );
 
-Future<Uint8List> aeadDecrypt(
-        {required TargetAeadAlgorithm algorithm,
-        required List<int> key,
-        required List<int> ciphertextWithNonce}) =>
+Future<Uint8List> aeadDecrypt({
+  required TargetAeadAlgorithm algorithm,
+  required List<int> key,
+  required List<int> ciphertextWithNonce,
+}) =>
     RustLib.instance.api.crateApiAeadApiAeadDecrypt(
-        algorithm: algorithm,
-        key: key,
-        ciphertextWithNonce: ciphertextWithNonce);
+      algorithm: algorithm,
+      key: key,
+      ciphertextWithNonce: ciphertextWithNonce,
+    );
 
-enum TargetAeadAlgorithm {
-  aes256Gcm,
-  chaCha20Poly1305,
-  ;
-}
+enum TargetAeadAlgorithm { aes256Gcm, chaCha20Poly1305 }

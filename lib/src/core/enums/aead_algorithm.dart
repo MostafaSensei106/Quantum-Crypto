@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 enum AeadAlgorithm {
   aes256Gcm,
   chaCha20Poly1305,

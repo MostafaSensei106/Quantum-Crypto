@@ -8,36 +8,40 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
 
-Future<DsaKeyPairDto> generateDsaKeypair(
-        {required TargetDsaAlgorithm algorithm}) =>
+Future<DsaKeyPairDto> generateDsaKeypair({
+  required TargetDsaAlgorithm algorithm,
+}) =>
     RustLib.instance.api.crateApiDsaApiGenerateDsaKeypair(algorithm: algorithm);
 
-Future<Uint8List> dsaSign(
-        {required TargetDsaAlgorithm algorithm,
-        required List<int> message,
-        required List<int> secretKey}) =>
+Future<Uint8List> dsaSign({
+  required TargetDsaAlgorithm algorithm,
+  required List<int> message,
+  required List<int> secretKey,
+}) =>
     RustLib.instance.api.crateApiDsaApiDsaSign(
-        algorithm: algorithm, message: message, secretKey: secretKey);
+      algorithm: algorithm,
+      message: message,
+      secretKey: secretKey,
+    );
 
-Future<bool> dsaVerify(
-        {required TargetDsaAlgorithm algorithm,
-        required List<int> message,
-        required List<int> signature,
-        required List<int> publicKey}) =>
+Future<bool> dsaVerify({
+  required TargetDsaAlgorithm algorithm,
+  required List<int> message,
+  required List<int> signature,
+  required List<int> publicKey,
+}) =>
     RustLib.instance.api.crateApiDsaApiDsaVerify(
-        algorithm: algorithm,
-        message: message,
-        signature: signature,
-        publicKey: publicKey);
+      algorithm: algorithm,
+      message: message,
+      signature: signature,
+      publicKey: publicKey,
+    );
 
 class DsaKeyPairDto {
   final Uint8List publicKey;
   final Uint8List secretKey;
 
-  const DsaKeyPairDto({
-    required this.publicKey,
-    required this.secretKey,
-  });
+  const DsaKeyPairDto({required this.publicKey, required this.secretKey});
 
   @override
   int get hashCode => publicKey.hashCode ^ secretKey.hashCode;
@@ -51,9 +55,4 @@ class DsaKeyPairDto {
           secretKey == other.secretKey;
 }
 
-enum TargetDsaAlgorithm {
-  mlDsa44,
-  mlDsa65,
-  mlDsa87,
-  ;
-}
+enum TargetDsaAlgorithm { mlDsa44, mlDsa65, mlDsa87 }

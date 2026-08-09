@@ -4,11 +4,15 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/aead_api.dart';
+import 'api/benchmark_api.dart';
 import 'api/dsa_api.dart';
 import 'api/hybrid_kem_api.dart';
+import 'api/kdf_api.dart';
 import 'api/kem_api.dart';
 import 'api/key_serialization_api.dart';
 import 'api/secure_messaging_api.dart';
+import 'api/seed_keygen_api.dart';
+import 'api/streaming_api.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -40,12 +44,8 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   /// Initialize flutter_rust_bridge in mock mode.
   /// No libraries for FFI are loaded.
-  static void initMock({
-    required RustLibApi api,
-  }) {
-    instance.initMockImpl(
-      api: api,
-    );
+  static void initMock({required RustLibApi api}) {
+    instance.initMockImpl(api: api);
   }
 
   /// Dispose flutter_rust_bridge
@@ -73,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -752130001;
+  int get rustContentHash => 885833109;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -85,93 +85,197 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<Uint8List> crateApiAeadApiAeadDecrypt(
-      {required TargetAeadAlgorithm algorithm,
-      required List<int> key,
-      required List<int> ciphertextWithNonce});
+  Future<Uint8List> crateApiAeadApiAeadDecrypt({
+    required TargetAeadAlgorithm algorithm,
+    required List<int> key,
+    required List<int> ciphertextWithNonce,
+  });
 
-  Future<Uint8List> crateApiAeadApiAeadEncrypt(
-      {required TargetAeadAlgorithm algorithm,
-      required List<int> key,
-      required List<int> plaintext});
+  Future<Uint8List> crateApiAeadApiAeadEncrypt({
+    required TargetAeadAlgorithm algorithm,
+    required List<int> key,
+    required List<int> plaintext,
+  });
 
-  Future<Uint8List> crateApiKeySerializationApiBase64ToBytes(
-      {required String encoded});
+  Future<Uint8List> crateApiKeySerializationApiBase64ToBytes({
+    required String encoded,
+  });
 
-  Future<Uint8List> crateApiKeySerializationApiBase64UrlSafeToBytes(
-      {required String encoded});
+  Future<Uint8List> crateApiKeySerializationApiBase64UrlSafeToBytes({
+    required String encoded,
+  });
 
-  Future<String> crateApiKeySerializationApiBytesToBase64(
-      {required List<int> data});
+  Future<List<BenchmarkResult>> crateApiBenchmarkApiBenchmarkDsaByName({
+    required String algorithmName,
+    required int iterations,
+  });
 
-  Future<String> crateApiKeySerializationApiBytesToBase64UrlSafe(
-      {required List<int> data});
+  Future<List<BenchmarkResult>> crateApiBenchmarkApiBenchmarkKemByName({
+    required String algorithmName,
+    required int iterations,
+  });
 
-  Future<String> crateApiKeySerializationApiBytesToHex(
-      {required List<int> data});
+  Future<String> crateApiKeySerializationApiBytesToBase64({
+    required List<int> data,
+  });
 
-  Future<Uint8List> crateApiSecureMessagingApiDecryptThenVerify(
-      {required List<int> packageMlkemCiphertext,
-      required List<int> packageX25519EphemeralPk,
-      required List<int> packageEncryptedPayload,
-      required TargetDsaAlgorithm dsaAlgorithm,
-      required TargetHybridKemAlgorithm kemAlgorithm,
-      required TargetAeadAlgorithm aeadAlgorithm,
-      required List<int> recipientMlkemSecretKey,
-      required List<int> recipientX25519SecretKey,
-      required List<int> senderDsaPublicKey});
+  Future<String> crateApiKeySerializationApiBytesToBase64UrlSafe({
+    required List<int> data,
+  });
 
-  Future<Uint8List> crateApiDsaApiDsaSign(
-      {required TargetDsaAlgorithm algorithm,
-      required List<int> message,
-      required List<int> secretKey});
+  Future<String> crateApiKeySerializationApiBytesToHex({
+    required List<int> data,
+  });
 
-  Future<bool> crateApiDsaApiDsaVerify(
-      {required TargetDsaAlgorithm algorithm,
-      required List<int> message,
-      required List<int> signature,
-      required List<int> publicKey});
+  Future<Uint8List> crateApiSecureMessagingApiDecryptThenVerify({
+    required List<int> packageMlkemCiphertext,
+    required List<int> packageX25519EphemeralPk,
+    required List<int> packageEncryptedPayload,
+    required TargetDsaAlgorithm dsaAlgorithm,
+    required TargetHybridKemAlgorithm kemAlgorithm,
+    required TargetAeadAlgorithm aeadAlgorithm,
+    required List<int> recipientMlkemSecretKey,
+    required List<int> recipientX25519SecretKey,
+    required List<int> senderDsaPublicKey,
+  });
 
-  Future<DsaKeyPairDto> crateApiDsaApiGenerateDsaKeypair(
-      {required TargetDsaAlgorithm algorithm});
+  Future<Uint8List> crateApiSeedKeygenApiDeriveAeadKeyFromSeed({
+    required List<int> seed,
+    required int keyIndex,
+  });
 
-  Future<HybridKeyPairDto> crateApiHybridKemApiGenerateHybridKemKeypair(
-      {required TargetHybridKemAlgorithm algorithm});
+  Future<Uint8List> crateApiSeedKeygenApiDeriveKeyFromSeed({
+    required List<int> seed,
+    required String purpose,
+    required int keyIndex,
+    required int outputLen,
+  });
 
-  Future<KeyPairDto> crateApiKemApiGenerateKemKeypair(
-      {required TargetKemAlgorithm algorithm});
+  Future<Uint8List> crateApiSeedKeygenApiDeriveX25519FromSeed({
+    required List<int> seed,
+    required int keyIndex,
+  });
 
-  Future<Uint8List> crateApiKeySerializationApiHexToBytes(
-      {required String hex});
+  Future<Uint8List> crateApiDsaApiDsaSign({
+    required TargetDsaAlgorithm algorithm,
+    required List<int> message,
+    required List<int> secretKey,
+  });
 
-  Future<Uint8List> crateApiHybridKemApiHybridKemDecapsulate(
-      {required TargetHybridKemAlgorithm algorithm,
-      required List<int> mlkemCiphertext,
-      required List<int> x25519EphemeralPk,
-      required List<int> mlkemSecretKey,
-      required List<int> x25519SecretKey});
+  Future<bool> crateApiDsaApiDsaVerify({
+    required TargetDsaAlgorithm algorithm,
+    required List<int> message,
+    required List<int> signature,
+    required List<int> publicKey,
+  });
 
-  Future<HybridEncapsulationDto> crateApiHybridKemApiHybridKemEncapsulate(
-      {required TargetHybridKemAlgorithm algorithm,
-      required List<int> mlkemPublicKey,
-      required List<int> x25519PublicKey});
+  Future<EncryptThenSignPackageDto> crateApiSecureMessagingApiEncryptThenSign({
+    required TargetDsaAlgorithm dsaAlgorithm,
+    required TargetHybridKemAlgorithm kemAlgorithm,
+    required TargetAeadAlgorithm aeadAlgorithm,
+    required List<int> message,
+    required List<int> senderDsaSecretKey,
+    required List<int> recipientMlkemPublicKey,
+    required List<int> recipientX25519PublicKey,
+  });
 
-  Future<Uint8List> crateApiKemApiKemDecapsulate(
-      {required TargetKemAlgorithm algorithm,
-      required List<int> ciphertext,
-      required List<int> secretKey});
+  Future<DsaKeyPairDto> crateApiDsaApiGenerateDsaKeypair({
+    required TargetDsaAlgorithm algorithm,
+  });
 
-  Future<EncapsulationDto> crateApiKemApiKemEncapsulate(
-      {required TargetKemAlgorithm algorithm, required List<int> publicKey});
+  Future<HybridKeyPairDto> crateApiHybridKemApiGenerateHybridKemKeypair({
+    required TargetHybridKemAlgorithm algorithm,
+  });
 
-  Future<SecurePackageDto> crateApiSecureMessagingApiSignThenEncrypt(
-      {required TargetDsaAlgorithm dsaAlgorithm,
-      required TargetHybridKemAlgorithm kemAlgorithm,
-      required TargetAeadAlgorithm aeadAlgorithm,
-      required List<int> message,
-      required List<int> senderDsaSecretKey,
-      required List<int> recipientMlkemPublicKey,
-      required List<int> recipientX25519PublicKey});
+  Future<KeyPairDto> crateApiKemApiGenerateKemKeypair({
+    required TargetKemAlgorithm algorithm,
+  });
+
+  Future<Uint8List> crateApiSeedKeygenApiGenerateMasterSeed();
+
+  Future<Uint8List> crateApiKeySerializationApiHexToBytes({
+    required String hex,
+  });
+
+  Future<Uint8List> crateApiKdfApiHkdfDerive({
+    required List<int> sharedSecret,
+    required List<int> salt,
+    required List<int> info,
+    required int outputLen,
+  });
+
+  Future<List<Uint8List>> crateApiKdfApiHkdfDeriveMulti({
+    required List<int> sharedSecret,
+    required List<int> salt,
+    required List<String> infoStrings,
+    required int keyLength,
+  });
+
+  Future<Uint8List> crateApiHybridKemApiHybridKemDecapsulate({
+    required TargetHybridKemAlgorithm algorithm,
+    required List<int> mlkemCiphertext,
+    required List<int> x25519EphemeralPk,
+    required List<int> mlkemSecretKey,
+    required List<int> x25519SecretKey,
+  });
+
+  Future<HybridEncapsulationDto> crateApiHybridKemApiHybridKemEncapsulate({
+    required TargetHybridKemAlgorithm algorithm,
+    required List<int> mlkemPublicKey,
+    required List<int> x25519PublicKey,
+  });
+
+  Future<Uint8List> crateApiKemApiKemDecapsulate({
+    required TargetKemAlgorithm algorithm,
+    required List<int> ciphertext,
+    required List<int> secretKey,
+  });
+
+  Future<EncapsulationDto> crateApiKemApiKemEncapsulate({
+    required TargetKemAlgorithm algorithm,
+    required List<int> publicKey,
+  });
+
+  Future<BenchmarkSuiteResult> crateApiBenchmarkApiRunBenchmarkSuite({
+    required int kemIterations,
+    required int dsaIterations,
+    required int aeadIterations,
+  });
+
+  Future<SecurePackageDto> crateApiSecureMessagingApiSignThenEncrypt({
+    required TargetDsaAlgorithm dsaAlgorithm,
+    required TargetHybridKemAlgorithm kemAlgorithm,
+    required TargetAeadAlgorithm aeadAlgorithm,
+    required List<int> message,
+    required List<int> senderDsaSecretKey,
+    required List<int> recipientMlkemPublicKey,
+    required List<int> recipientX25519PublicKey,
+  });
+
+  Future<Uint8List> crateApiStreamingApiStreamAeadDecrypt({
+    required List<int> key,
+    required List<int> encryptedData,
+  });
+
+  Future<Uint8List> crateApiStreamingApiStreamAeadEncrypt({
+    required TargetAeadAlgorithm algorithm,
+    required List<int> key,
+    required List<int> plaintext,
+    int? chunkSize,
+  });
+
+  Future<Uint8List> crateApiSecureMessagingApiVerifyThenDecrypt({
+    required List<int> packageMlkemCiphertext,
+    required List<int> packageX25519EphemeralPk,
+    required List<int> packageEncryptedPayload,
+    required List<int> packageSignature,
+    required TargetDsaAlgorithm dsaAlgorithm,
+    required TargetHybridKemAlgorithm kemAlgorithm,
+    required TargetAeadAlgorithm aeadAlgorithm,
+    required List<int> recipientMlkemSecretKey,
+    required List<int> recipientX25519SecretKey,
+    required List<int> senderDsaPublicKey,
+  });
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -183,27 +287,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<Uint8List> crateApiAeadApiAeadDecrypt(
-      {required TargetAeadAlgorithm algorithm,
-      required List<int> key,
-      required List<int> ciphertextWithNonce}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_aead_algorithm(algorithm, serializer);
-        sse_encode_list_prim_u_8_loose(key, serializer);
-        sse_encode_list_prim_u_8_loose(ciphertextWithNonce, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 1, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<Uint8List> crateApiAeadApiAeadDecrypt({
+    required TargetAeadAlgorithm algorithm,
+    required List<int> key,
+    required List<int> ciphertextWithNonce,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_aead_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(key, serializer);
+          sse_encode_list_prim_u_8_loose(ciphertextWithNonce, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiAeadApiAeadDecryptConstMeta,
+        argValues: [algorithm, key, ciphertextWithNonce],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiAeadApiAeadDecryptConstMeta,
-      argValues: [algorithm, key, ciphertextWithNonce],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiAeadApiAeadDecryptConstMeta => const TaskConstMeta(
@@ -212,27 +323,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Uint8List> crateApiAeadApiAeadEncrypt(
-      {required TargetAeadAlgorithm algorithm,
-      required List<int> key,
-      required List<int> plaintext}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_aead_algorithm(algorithm, serializer);
-        sse_encode_list_prim_u_8_loose(key, serializer);
-        sse_encode_list_prim_u_8_loose(plaintext, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 2, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<Uint8List> crateApiAeadApiAeadEncrypt({
+    required TargetAeadAlgorithm algorithm,
+    required List<int> key,
+    required List<int> plaintext,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_aead_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(key, serializer);
+          sse_encode_list_prim_u_8_loose(plaintext, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiAeadApiAeadEncryptConstMeta,
+        argValues: [algorithm, key, plaintext],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiAeadApiAeadEncryptConstMeta,
-      argValues: [algorithm, key, plaintext],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiAeadApiAeadEncryptConstMeta => const TaskConstMeta(
@@ -241,49 +359,60 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Uint8List> crateApiKeySerializationApiBase64ToBytes(
-      {required String encoded}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_String(encoded, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 3, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<Uint8List> crateApiKeySerializationApiBase64ToBytes({
+    required String encoded,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(encoded, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiKeySerializationApiBase64ToBytesConstMeta,
+        argValues: [encoded],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKeySerializationApiBase64ToBytesConstMeta,
-      argValues: [encoded],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiKeySerializationApiBase64ToBytesConstMeta =>
-      const TaskConstMeta(
-        debugName: "base64_to_bytes",
-        argNames: ["encoded"],
-      );
+      const TaskConstMeta(debugName: "base64_to_bytes", argNames: ["encoded"]);
 
   @override
-  Future<Uint8List> crateApiKeySerializationApiBase64UrlSafeToBytes(
-      {required String encoded}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_String(encoded, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 4, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<Uint8List> crateApiKeySerializationApiBase64UrlSafeToBytes({
+    required String encoded,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(encoded, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiKeySerializationApiBase64UrlSafeToBytesConstMeta,
+        argValues: [encoded],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKeySerializationApiBase64UrlSafeToBytesConstMeta,
-      argValues: [encoded],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiKeySerializationApiBase64UrlSafeToBytesConstMeta =>
@@ -293,49 +422,130 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiKeySerializationApiBytesToBase64(
-      {required List<int> data}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_prim_u_8_loose(data, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 5, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_String,
-        decodeErrorData: null,
+  Future<List<BenchmarkResult>> crateApiBenchmarkApiBenchmarkDsaByName({
+    required String algorithmName,
+    required int iterations,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(algorithmName, serializer);
+          sse_encode_u_32(iterations, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_benchmark_result,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiBenchmarkApiBenchmarkDsaByNameConstMeta,
+        argValues: [algorithmName, iterations],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKeySerializationApiBytesToBase64ConstMeta,
-      argValues: [data],
-      apiImpl: this,
-    ));
+    );
   }
 
-  TaskConstMeta get kCrateApiKeySerializationApiBytesToBase64ConstMeta =>
+  TaskConstMeta get kCrateApiBenchmarkApiBenchmarkDsaByNameConstMeta =>
       const TaskConstMeta(
-        debugName: "bytes_to_base64",
-        argNames: ["data"],
+        debugName: "benchmark_dsa_by_name",
+        argNames: ["algorithmName", "iterations"],
       );
 
   @override
-  Future<String> crateApiKeySerializationApiBytesToBase64UrlSafe(
-      {required List<int> data}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_prim_u_8_loose(data, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 6, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_String,
-        decodeErrorData: null,
+  Future<List<BenchmarkResult>> crateApiBenchmarkApiBenchmarkKemByName({
+    required String algorithmName,
+    required int iterations,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(algorithmName, serializer);
+          sse_encode_u_32(iterations, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 6,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_benchmark_result,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiBenchmarkApiBenchmarkKemByNameConstMeta,
+        argValues: [algorithmName, iterations],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKeySerializationApiBytesToBase64UrlSafeConstMeta,
-      argValues: [data],
-      apiImpl: this,
-    ));
+    );
+  }
+
+  TaskConstMeta get kCrateApiBenchmarkApiBenchmarkKemByNameConstMeta =>
+      const TaskConstMeta(
+        debugName: "benchmark_kem_by_name",
+        argNames: ["algorithmName", "iterations"],
+      );
+
+  @override
+  Future<String> crateApiKeySerializationApiBytesToBase64({
+    required List<int> data,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(data, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiKeySerializationApiBytesToBase64ConstMeta,
+        argValues: [data],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiKeySerializationApiBytesToBase64ConstMeta =>
+      const TaskConstMeta(debugName: "bytes_to_base64", argNames: ["data"]);
+
+  @override
+  Future<String> crateApiKeySerializationApiBytesToBase64UrlSafe({
+    required List<int> data,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(data, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 8,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiKeySerializationApiBytesToBase64UrlSafeConstMeta,
+        argValues: [data],
+        apiImpl: this,
+      ),
+    );
   }
 
   TaskConstMeta get kCrateApiKeySerializationApiBytesToBase64UrlSafeConstMeta =>
@@ -345,75 +555,86 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiKeySerializationApiBytesToHex(
-      {required List<int> data}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_prim_u_8_loose(data, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 7, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_String,
-        decodeErrorData: null,
+  Future<String> crateApiKeySerializationApiBytesToHex({
+    required List<int> data,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(data, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 9,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiKeySerializationApiBytesToHexConstMeta,
+        argValues: [data],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKeySerializationApiBytesToHexConstMeta,
-      argValues: [data],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiKeySerializationApiBytesToHexConstMeta =>
-      const TaskConstMeta(
-        debugName: "bytes_to_hex",
-        argNames: ["data"],
-      );
+      const TaskConstMeta(debugName: "bytes_to_hex", argNames: ["data"]);
 
   @override
-  Future<Uint8List> crateApiSecureMessagingApiDecryptThenVerify(
-      {required List<int> packageMlkemCiphertext,
-      required List<int> packageX25519EphemeralPk,
-      required List<int> packageEncryptedPayload,
-      required TargetDsaAlgorithm dsaAlgorithm,
-      required TargetHybridKemAlgorithm kemAlgorithm,
-      required TargetAeadAlgorithm aeadAlgorithm,
-      required List<int> recipientMlkemSecretKey,
-      required List<int> recipientX25519SecretKey,
-      required List<int> senderDsaPublicKey}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_list_prim_u_8_loose(packageMlkemCiphertext, serializer);
-        sse_encode_list_prim_u_8_loose(packageX25519EphemeralPk, serializer);
-        sse_encode_list_prim_u_8_loose(packageEncryptedPayload, serializer);
-        sse_encode_target_dsa_algorithm(dsaAlgorithm, serializer);
-        sse_encode_target_hybrid_kem_algorithm(kemAlgorithm, serializer);
-        sse_encode_target_aead_algorithm(aeadAlgorithm, serializer);
-        sse_encode_list_prim_u_8_loose(recipientMlkemSecretKey, serializer);
-        sse_encode_list_prim_u_8_loose(recipientX25519SecretKey, serializer);
-        sse_encode_list_prim_u_8_loose(senderDsaPublicKey, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 8, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<Uint8List> crateApiSecureMessagingApiDecryptThenVerify({
+    required List<int> packageMlkemCiphertext,
+    required List<int> packageX25519EphemeralPk,
+    required List<int> packageEncryptedPayload,
+    required TargetDsaAlgorithm dsaAlgorithm,
+    required TargetHybridKemAlgorithm kemAlgorithm,
+    required TargetAeadAlgorithm aeadAlgorithm,
+    required List<int> recipientMlkemSecretKey,
+    required List<int> recipientX25519SecretKey,
+    required List<int> senderDsaPublicKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(packageMlkemCiphertext, serializer);
+          sse_encode_list_prim_u_8_loose(packageX25519EphemeralPk, serializer);
+          sse_encode_list_prim_u_8_loose(packageEncryptedPayload, serializer);
+          sse_encode_target_dsa_algorithm(dsaAlgorithm, serializer);
+          sse_encode_target_hybrid_kem_algorithm(kemAlgorithm, serializer);
+          sse_encode_target_aead_algorithm(aeadAlgorithm, serializer);
+          sse_encode_list_prim_u_8_loose(recipientMlkemSecretKey, serializer);
+          sse_encode_list_prim_u_8_loose(recipientX25519SecretKey, serializer);
+          sse_encode_list_prim_u_8_loose(senderDsaPublicKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 10,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSecureMessagingApiDecryptThenVerifyConstMeta,
+        argValues: [
+          packageMlkemCiphertext,
+          packageX25519EphemeralPk,
+          packageEncryptedPayload,
+          dsaAlgorithm,
+          kemAlgorithm,
+          aeadAlgorithm,
+          recipientMlkemSecretKey,
+          recipientX25519SecretKey,
+          senderDsaPublicKey,
+        ],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiSecureMessagingApiDecryptThenVerifyConstMeta,
-      argValues: [
-        packageMlkemCiphertext,
-        packageX25519EphemeralPk,
-        packageEncryptedPayload,
-        dsaAlgorithm,
-        kemAlgorithm,
-        aeadAlgorithm,
-        recipientMlkemSecretKey,
-        recipientX25519SecretKey,
-        senderDsaPublicKey
-      ],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiSecureMessagingApiDecryptThenVerifyConstMeta =>
@@ -428,32 +649,148 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "aeadAlgorithm",
           "recipientMlkemSecretKey",
           "recipientX25519SecretKey",
-          "senderDsaPublicKey"
+          "senderDsaPublicKey",
         ],
       );
 
   @override
-  Future<Uint8List> crateApiDsaApiDsaSign(
-      {required TargetDsaAlgorithm algorithm,
-      required List<int> message,
-      required List<int> secretKey}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_dsa_algorithm(algorithm, serializer);
-        sse_encode_list_prim_u_8_loose(message, serializer);
-        sse_encode_list_prim_u_8_loose(secretKey, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 9, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<Uint8List> crateApiSeedKeygenApiDeriveAeadKeyFromSeed({
+    required List<int> seed,
+    required int keyIndex,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(seed, serializer);
+          sse_encode_u_32(keyIndex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 11,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSeedKeygenApiDeriveAeadKeyFromSeedConstMeta,
+        argValues: [seed, keyIndex],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiDsaApiDsaSignConstMeta,
-      argValues: [algorithm, message, secretKey],
-      apiImpl: this,
-    ));
+    );
+  }
+
+  TaskConstMeta get kCrateApiSeedKeygenApiDeriveAeadKeyFromSeedConstMeta =>
+      const TaskConstMeta(
+        debugName: "derive_aead_key_from_seed",
+        argNames: ["seed", "keyIndex"],
+      );
+
+  @override
+  Future<Uint8List> crateApiSeedKeygenApiDeriveKeyFromSeed({
+    required List<int> seed,
+    required String purpose,
+    required int keyIndex,
+    required int outputLen,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(seed, serializer);
+          sse_encode_String(purpose, serializer);
+          sse_encode_u_32(keyIndex, serializer);
+          sse_encode_u_32(outputLen, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 12,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSeedKeygenApiDeriveKeyFromSeedConstMeta,
+        argValues: [seed, purpose, keyIndex, outputLen],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSeedKeygenApiDeriveKeyFromSeedConstMeta =>
+      const TaskConstMeta(
+        debugName: "derive_key_from_seed",
+        argNames: ["seed", "purpose", "keyIndex", "outputLen"],
+      );
+
+  @override
+  Future<Uint8List> crateApiSeedKeygenApiDeriveX25519FromSeed({
+    required List<int> seed,
+    required int keyIndex,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(seed, serializer);
+          sse_encode_u_32(keyIndex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSeedKeygenApiDeriveX25519FromSeedConstMeta,
+        argValues: [seed, keyIndex],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSeedKeygenApiDeriveX25519FromSeedConstMeta =>
+      const TaskConstMeta(
+        debugName: "derive_x25519_from_seed",
+        argNames: ["seed", "keyIndex"],
+      );
+
+  @override
+  Future<Uint8List> crateApiDsaApiDsaSign({
+    required TargetDsaAlgorithm algorithm,
+    required List<int> message,
+    required List<int> secretKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_dsa_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(message, serializer);
+          sse_encode_list_prim_u_8_loose(secretKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 14,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiDsaApiDsaSignConstMeta,
+        argValues: [algorithm, message, secretKey],
+        apiImpl: this,
+      ),
+    );
   }
 
   TaskConstMeta get kCrateApiDsaApiDsaSignConstMeta => const TaskConstMeta(
@@ -462,29 +799,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<bool> crateApiDsaApiDsaVerify(
-      {required TargetDsaAlgorithm algorithm,
-      required List<int> message,
-      required List<int> signature,
-      required List<int> publicKey}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_dsa_algorithm(algorithm, serializer);
-        sse_encode_list_prim_u_8_loose(message, serializer);
-        sse_encode_list_prim_u_8_loose(signature, serializer);
-        sse_encode_list_prim_u_8_loose(publicKey, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 10, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_bool,
-        decodeErrorData: sse_decode_String,
+  Future<bool> crateApiDsaApiDsaVerify({
+    required TargetDsaAlgorithm algorithm,
+    required List<int> message,
+    required List<int> signature,
+    required List<int> publicKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_dsa_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(message, serializer);
+          sse_encode_list_prim_u_8_loose(signature, serializer);
+          sse_encode_list_prim_u_8_loose(publicKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 15,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiDsaApiDsaVerifyConstMeta,
+        argValues: [algorithm, message, signature, publicKey],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiDsaApiDsaVerifyConstMeta,
-      argValues: [algorithm, message, signature, publicKey],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiDsaApiDsaVerifyConstMeta => const TaskConstMeta(
@@ -493,23 +837,91 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<DsaKeyPairDto> crateApiDsaApiGenerateDsaKeypair(
-      {required TargetDsaAlgorithm algorithm}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_dsa_algorithm(algorithm, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 11, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_dsa_key_pair_dto,
-        decodeErrorData: sse_decode_String,
+  Future<EncryptThenSignPackageDto> crateApiSecureMessagingApiEncryptThenSign({
+    required TargetDsaAlgorithm dsaAlgorithm,
+    required TargetHybridKemAlgorithm kemAlgorithm,
+    required TargetAeadAlgorithm aeadAlgorithm,
+    required List<int> message,
+    required List<int> senderDsaSecretKey,
+    required List<int> recipientMlkemPublicKey,
+    required List<int> recipientX25519PublicKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_dsa_algorithm(dsaAlgorithm, serializer);
+          sse_encode_target_hybrid_kem_algorithm(kemAlgorithm, serializer);
+          sse_encode_target_aead_algorithm(aeadAlgorithm, serializer);
+          sse_encode_list_prim_u_8_loose(message, serializer);
+          sse_encode_list_prim_u_8_loose(senderDsaSecretKey, serializer);
+          sse_encode_list_prim_u_8_loose(recipientMlkemPublicKey, serializer);
+          sse_encode_list_prim_u_8_loose(recipientX25519PublicKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 16,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_encrypt_then_sign_package_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSecureMessagingApiEncryptThenSignConstMeta,
+        argValues: [
+          dsaAlgorithm,
+          kemAlgorithm,
+          aeadAlgorithm,
+          message,
+          senderDsaSecretKey,
+          recipientMlkemPublicKey,
+          recipientX25519PublicKey,
+        ],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiDsaApiGenerateDsaKeypairConstMeta,
-      argValues: [algorithm],
-      apiImpl: this,
-    ));
+    );
+  }
+
+  TaskConstMeta get kCrateApiSecureMessagingApiEncryptThenSignConstMeta =>
+      const TaskConstMeta(
+        debugName: "encrypt_then_sign",
+        argNames: [
+          "dsaAlgorithm",
+          "kemAlgorithm",
+          "aeadAlgorithm",
+          "message",
+          "senderDsaSecretKey",
+          "recipientMlkemPublicKey",
+          "recipientX25519PublicKey",
+        ],
+      );
+
+  @override
+  Future<DsaKeyPairDto> crateApiDsaApiGenerateDsaKeypair({
+    required TargetDsaAlgorithm algorithm,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_dsa_algorithm(algorithm, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 17,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_dsa_key_pair_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiDsaApiGenerateDsaKeypairConstMeta,
+        argValues: [algorithm],
+        apiImpl: this,
+      ),
+    );
   }
 
   TaskConstMeta get kCrateApiDsaApiGenerateDsaKeypairConstMeta =>
@@ -519,23 +931,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<HybridKeyPairDto> crateApiHybridKemApiGenerateHybridKemKeypair(
-      {required TargetHybridKemAlgorithm algorithm}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_hybrid_kem_algorithm(algorithm, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 12, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_hybrid_key_pair_dto,
-        decodeErrorData: sse_decode_String,
+  Future<HybridKeyPairDto> crateApiHybridKemApiGenerateHybridKemKeypair({
+    required TargetHybridKemAlgorithm algorithm,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_hybrid_kem_algorithm(algorithm, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 18,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_hybrid_key_pair_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiHybridKemApiGenerateHybridKemKeypairConstMeta,
+        argValues: [algorithm],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiHybridKemApiGenerateHybridKemKeypairConstMeta,
-      argValues: [algorithm],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiHybridKemApiGenerateHybridKemKeypairConstMeta =>
@@ -545,23 +964,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<KeyPairDto> crateApiKemApiGenerateKemKeypair(
-      {required TargetKemAlgorithm algorithm}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_kem_algorithm(algorithm, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 13, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_key_pair_dto,
-        decodeErrorData: sse_decode_String,
+  Future<KeyPairDto> crateApiKemApiGenerateKemKeypair({
+    required TargetKemAlgorithm algorithm,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_kem_algorithm(algorithm, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 19,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_key_pair_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiKemApiGenerateKemKeypairConstMeta,
+        argValues: [algorithm],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKemApiGenerateKemKeypairConstMeta,
-      argValues: [algorithm],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiKemApiGenerateKemKeypairConstMeta =>
@@ -571,63 +997,178 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Uint8List> crateApiKeySerializationApiHexToBytes(
-      {required String hex}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_String(hex, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 14, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<Uint8List> crateApiSeedKeygenApiGenerateMasterSeed() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 20,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSeedKeygenApiGenerateMasterSeedConstMeta,
+        argValues: [],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKeySerializationApiHexToBytesConstMeta,
-      argValues: [hex],
-      apiImpl: this,
-    ));
+    );
+  }
+
+  TaskConstMeta get kCrateApiSeedKeygenApiGenerateMasterSeedConstMeta =>
+      const TaskConstMeta(debugName: "generate_master_seed", argNames: []);
+
+  @override
+  Future<Uint8List> crateApiKeySerializationApiHexToBytes({
+    required String hex,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(hex, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 21,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiKeySerializationApiHexToBytesConstMeta,
+        argValues: [hex],
+        apiImpl: this,
+      ),
+    );
   }
 
   TaskConstMeta get kCrateApiKeySerializationApiHexToBytesConstMeta =>
-      const TaskConstMeta(
-        debugName: "hex_to_bytes",
-        argNames: ["hex"],
+      const TaskConstMeta(debugName: "hex_to_bytes", argNames: ["hex"]);
+
+  @override
+  Future<Uint8List> crateApiKdfApiHkdfDerive({
+    required List<int> sharedSecret,
+    required List<int> salt,
+    required List<int> info,
+    required int outputLen,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(sharedSecret, serializer);
+          sse_encode_list_prim_u_8_loose(salt, serializer);
+          sse_encode_list_prim_u_8_loose(info, serializer);
+          sse_encode_u_32(outputLen, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiKdfApiHkdfDeriveConstMeta,
+        argValues: [sharedSecret, salt, info, outputLen],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiKdfApiHkdfDeriveConstMeta => const TaskConstMeta(
+        debugName: "hkdf_derive",
+        argNames: ["sharedSecret", "salt", "info", "outputLen"],
       );
 
   @override
-  Future<Uint8List> crateApiHybridKemApiHybridKemDecapsulate(
-      {required TargetHybridKemAlgorithm algorithm,
-      required List<int> mlkemCiphertext,
-      required List<int> x25519EphemeralPk,
-      required List<int> mlkemSecretKey,
-      required List<int> x25519SecretKey}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_hybrid_kem_algorithm(algorithm, serializer);
-        sse_encode_list_prim_u_8_loose(mlkemCiphertext, serializer);
-        sse_encode_list_prim_u_8_loose(x25519EphemeralPk, serializer);
-        sse_encode_list_prim_u_8_loose(mlkemSecretKey, serializer);
-        sse_encode_list_prim_u_8_loose(x25519SecretKey, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 15, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<List<Uint8List>> crateApiKdfApiHkdfDeriveMulti({
+    required List<int> sharedSecret,
+    required List<int> salt,
+    required List<String> infoStrings,
+    required int keyLength,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(sharedSecret, serializer);
+          sse_encode_list_prim_u_8_loose(salt, serializer);
+          sse_encode_list_String(infoStrings, serializer);
+          sse_encode_u_32(keyLength, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 23,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiKdfApiHkdfDeriveMultiConstMeta,
+        argValues: [sharedSecret, salt, infoStrings, keyLength],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiHybridKemApiHybridKemDecapsulateConstMeta,
-      argValues: [
-        algorithm,
-        mlkemCiphertext,
-        x25519EphemeralPk,
-        mlkemSecretKey,
-        x25519SecretKey
-      ],
-      apiImpl: this,
-    ));
+    );
+  }
+
+  TaskConstMeta get kCrateApiKdfApiHkdfDeriveMultiConstMeta =>
+      const TaskConstMeta(
+        debugName: "hkdf_derive_multi",
+        argNames: ["sharedSecret", "salt", "infoStrings", "keyLength"],
+      );
+
+  @override
+  Future<Uint8List> crateApiHybridKemApiHybridKemDecapsulate({
+    required TargetHybridKemAlgorithm algorithm,
+    required List<int> mlkemCiphertext,
+    required List<int> x25519EphemeralPk,
+    required List<int> mlkemSecretKey,
+    required List<int> x25519SecretKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_hybrid_kem_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(mlkemCiphertext, serializer);
+          sse_encode_list_prim_u_8_loose(x25519EphemeralPk, serializer);
+          sse_encode_list_prim_u_8_loose(mlkemSecretKey, serializer);
+          sse_encode_list_prim_u_8_loose(x25519SecretKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 24,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiHybridKemApiHybridKemDecapsulateConstMeta,
+        argValues: [
+          algorithm,
+          mlkemCiphertext,
+          x25519EphemeralPk,
+          mlkemSecretKey,
+          x25519SecretKey,
+        ],
+        apiImpl: this,
+      ),
+    );
   }
 
   TaskConstMeta get kCrateApiHybridKemApiHybridKemDecapsulateConstMeta =>
@@ -638,32 +1179,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "mlkemCiphertext",
           "x25519EphemeralPk",
           "mlkemSecretKey",
-          "x25519SecretKey"
+          "x25519SecretKey",
         ],
       );
 
   @override
-  Future<HybridEncapsulationDto> crateApiHybridKemApiHybridKemEncapsulate(
-      {required TargetHybridKemAlgorithm algorithm,
-      required List<int> mlkemPublicKey,
-      required List<int> x25519PublicKey}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_hybrid_kem_algorithm(algorithm, serializer);
-        sse_encode_list_prim_u_8_loose(mlkemPublicKey, serializer);
-        sse_encode_list_prim_u_8_loose(x25519PublicKey, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 16, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_hybrid_encapsulation_dto,
-        decodeErrorData: sse_decode_String,
+  Future<HybridEncapsulationDto> crateApiHybridKemApiHybridKemEncapsulate({
+    required TargetHybridKemAlgorithm algorithm,
+    required List<int> mlkemPublicKey,
+    required List<int> x25519PublicKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_hybrid_kem_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(mlkemPublicKey, serializer);
+          sse_encode_list_prim_u_8_loose(x25519PublicKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 25,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_hybrid_encapsulation_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiHybridKemApiHybridKemEncapsulateConstMeta,
+        argValues: [algorithm, mlkemPublicKey, x25519PublicKey],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiHybridKemApiHybridKemEncapsulateConstMeta,
-      argValues: [algorithm, mlkemPublicKey, x25519PublicKey],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiHybridKemApiHybridKemEncapsulateConstMeta =>
@@ -673,27 +1221,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<Uint8List> crateApiKemApiKemDecapsulate(
-      {required TargetKemAlgorithm algorithm,
-      required List<int> ciphertext,
-      required List<int> secretKey}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_kem_algorithm(algorithm, serializer);
-        sse_encode_list_prim_u_8_loose(ciphertext, serializer);
-        sse_encode_list_prim_u_8_loose(secretKey, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 17, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: sse_decode_String,
+  Future<Uint8List> crateApiKemApiKemDecapsulate({
+    required TargetKemAlgorithm algorithm,
+    required List<int> ciphertext,
+    required List<int> secretKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_kem_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(ciphertext, serializer);
+          sse_encode_list_prim_u_8_loose(secretKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 26,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiKemApiKemDecapsulateConstMeta,
+        argValues: [algorithm, ciphertext, secretKey],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKemApiKemDecapsulateConstMeta,
-      argValues: [algorithm, ciphertext, secretKey],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiKemApiKemDecapsulateConstMeta =>
@@ -703,24 +1258,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<EncapsulationDto> crateApiKemApiKemEncapsulate(
-      {required TargetKemAlgorithm algorithm, required List<int> publicKey}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_kem_algorithm(algorithm, serializer);
-        sse_encode_list_prim_u_8_loose(publicKey, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 18, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_encapsulation_dto,
-        decodeErrorData: sse_decode_String,
+  Future<EncapsulationDto> crateApiKemApiKemEncapsulate({
+    required TargetKemAlgorithm algorithm,
+    required List<int> publicKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_kem_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(publicKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 27,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_encapsulation_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiKemApiKemEncapsulateConstMeta,
+        argValues: [algorithm, publicKey],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiKemApiKemEncapsulateConstMeta,
-      argValues: [algorithm, publicKey],
-      apiImpl: this,
-    ));
+    );
   }
 
   TaskConstMeta get kCrateApiKemApiKemEncapsulateConstMeta =>
@@ -730,43 +1293,87 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<SecurePackageDto> crateApiSecureMessagingApiSignThenEncrypt(
-      {required TargetDsaAlgorithm dsaAlgorithm,
-      required TargetHybridKemAlgorithm kemAlgorithm,
-      required TargetAeadAlgorithm aeadAlgorithm,
-      required List<int> message,
-      required List<int> senderDsaSecretKey,
-      required List<int> recipientMlkemPublicKey,
-      required List<int> recipientX25519PublicKey}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_target_dsa_algorithm(dsaAlgorithm, serializer);
-        sse_encode_target_hybrid_kem_algorithm(kemAlgorithm, serializer);
-        sse_encode_target_aead_algorithm(aeadAlgorithm, serializer);
-        sse_encode_list_prim_u_8_loose(message, serializer);
-        sse_encode_list_prim_u_8_loose(senderDsaSecretKey, serializer);
-        sse_encode_list_prim_u_8_loose(recipientMlkemPublicKey, serializer);
-        sse_encode_list_prim_u_8_loose(recipientX25519PublicKey, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 19, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_secure_package_dto,
-        decodeErrorData: sse_decode_String,
+  Future<BenchmarkSuiteResult> crateApiBenchmarkApiRunBenchmarkSuite({
+    required int kemIterations,
+    required int dsaIterations,
+    required int aeadIterations,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_32(kemIterations, serializer);
+          sse_encode_u_32(dsaIterations, serializer);
+          sse_encode_u_32(aeadIterations, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 28,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_benchmark_suite_result,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiBenchmarkApiRunBenchmarkSuiteConstMeta,
+        argValues: [kemIterations, dsaIterations, aeadIterations],
+        apiImpl: this,
       ),
-      constMeta: kCrateApiSecureMessagingApiSignThenEncryptConstMeta,
-      argValues: [
-        dsaAlgorithm,
-        kemAlgorithm,
-        aeadAlgorithm,
-        message,
-        senderDsaSecretKey,
-        recipientMlkemPublicKey,
-        recipientX25519PublicKey
-      ],
-      apiImpl: this,
-    ));
+    );
+  }
+
+  TaskConstMeta get kCrateApiBenchmarkApiRunBenchmarkSuiteConstMeta =>
+      const TaskConstMeta(
+        debugName: "run_benchmark_suite",
+        argNames: ["kemIterations", "dsaIterations", "aeadIterations"],
+      );
+
+  @override
+  Future<SecurePackageDto> crateApiSecureMessagingApiSignThenEncrypt({
+    required TargetDsaAlgorithm dsaAlgorithm,
+    required TargetHybridKemAlgorithm kemAlgorithm,
+    required TargetAeadAlgorithm aeadAlgorithm,
+    required List<int> message,
+    required List<int> senderDsaSecretKey,
+    required List<int> recipientMlkemPublicKey,
+    required List<int> recipientX25519PublicKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_dsa_algorithm(dsaAlgorithm, serializer);
+          sse_encode_target_hybrid_kem_algorithm(kemAlgorithm, serializer);
+          sse_encode_target_aead_algorithm(aeadAlgorithm, serializer);
+          sse_encode_list_prim_u_8_loose(message, serializer);
+          sse_encode_list_prim_u_8_loose(senderDsaSecretKey, serializer);
+          sse_encode_list_prim_u_8_loose(recipientMlkemPublicKey, serializer);
+          sse_encode_list_prim_u_8_loose(recipientX25519PublicKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 29,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_secure_package_dto,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSecureMessagingApiSignThenEncryptConstMeta,
+        argValues: [
+          dsaAlgorithm,
+          kemAlgorithm,
+          aeadAlgorithm,
+          message,
+          senderDsaSecretKey,
+          recipientMlkemPublicKey,
+          recipientX25519PublicKey,
+        ],
+        apiImpl: this,
+      ),
+    );
   }
 
   TaskConstMeta get kCrateApiSecureMessagingApiSignThenEncryptConstMeta =>
@@ -779,7 +1386,154 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "message",
           "senderDsaSecretKey",
           "recipientMlkemPublicKey",
-          "recipientX25519PublicKey"
+          "recipientX25519PublicKey",
+        ],
+      );
+
+  @override
+  Future<Uint8List> crateApiStreamingApiStreamAeadDecrypt({
+    required List<int> key,
+    required List<int> encryptedData,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(key, serializer);
+          sse_encode_list_prim_u_8_loose(encryptedData, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 30,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiStreamingApiStreamAeadDecryptConstMeta,
+        argValues: [key, encryptedData],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiStreamingApiStreamAeadDecryptConstMeta =>
+      const TaskConstMeta(
+        debugName: "stream_aead_decrypt",
+        argNames: ["key", "encryptedData"],
+      );
+
+  @override
+  Future<Uint8List> crateApiStreamingApiStreamAeadEncrypt({
+    required TargetAeadAlgorithm algorithm,
+    required List<int> key,
+    required List<int> plaintext,
+    int? chunkSize,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_target_aead_algorithm(algorithm, serializer);
+          sse_encode_list_prim_u_8_loose(key, serializer);
+          sse_encode_list_prim_u_8_loose(plaintext, serializer);
+          sse_encode_opt_box_autoadd_u_32(chunkSize, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 31,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiStreamingApiStreamAeadEncryptConstMeta,
+        argValues: [algorithm, key, plaintext, chunkSize],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiStreamingApiStreamAeadEncryptConstMeta =>
+      const TaskConstMeta(
+        debugName: "stream_aead_encrypt",
+        argNames: ["algorithm", "key", "plaintext", "chunkSize"],
+      );
+
+  @override
+  Future<Uint8List> crateApiSecureMessagingApiVerifyThenDecrypt({
+    required List<int> packageMlkemCiphertext,
+    required List<int> packageX25519EphemeralPk,
+    required List<int> packageEncryptedPayload,
+    required List<int> packageSignature,
+    required TargetDsaAlgorithm dsaAlgorithm,
+    required TargetHybridKemAlgorithm kemAlgorithm,
+    required TargetAeadAlgorithm aeadAlgorithm,
+    required List<int> recipientMlkemSecretKey,
+    required List<int> recipientX25519SecretKey,
+    required List<int> senderDsaPublicKey,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_list_prim_u_8_loose(packageMlkemCiphertext, serializer);
+          sse_encode_list_prim_u_8_loose(packageX25519EphemeralPk, serializer);
+          sse_encode_list_prim_u_8_loose(packageEncryptedPayload, serializer);
+          sse_encode_list_prim_u_8_loose(packageSignature, serializer);
+          sse_encode_target_dsa_algorithm(dsaAlgorithm, serializer);
+          sse_encode_target_hybrid_kem_algorithm(kemAlgorithm, serializer);
+          sse_encode_target_aead_algorithm(aeadAlgorithm, serializer);
+          sse_encode_list_prim_u_8_loose(recipientMlkemSecretKey, serializer);
+          sse_encode_list_prim_u_8_loose(recipientX25519SecretKey, serializer);
+          sse_encode_list_prim_u_8_loose(senderDsaPublicKey, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 32,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_u_8_strict,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiSecureMessagingApiVerifyThenDecryptConstMeta,
+        argValues: [
+          packageMlkemCiphertext,
+          packageX25519EphemeralPk,
+          packageEncryptedPayload,
+          packageSignature,
+          dsaAlgorithm,
+          kemAlgorithm,
+          aeadAlgorithm,
+          recipientMlkemSecretKey,
+          recipientX25519SecretKey,
+          senderDsaPublicKey,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSecureMessagingApiVerifyThenDecryptConstMeta =>
+      const TaskConstMeta(
+        debugName: "verify_then_decrypt",
+        argNames: [
+          "packageMlkemCiphertext",
+          "packageX25519EphemeralPk",
+          "packageEncryptedPayload",
+          "packageSignature",
+          "dsaAlgorithm",
+          "kemAlgorithm",
+          "aeadAlgorithm",
+          "recipientMlkemSecretKey",
+          "recipientX25519SecretKey",
+          "senderDsaPublicKey",
         ],
       );
 
@@ -790,9 +1544,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  BenchmarkResult dco_decode_benchmark_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return BenchmarkResult(
+      operation: dco_decode_String(arr[0]),
+      algorithm: dco_decode_String(arr[1]),
+      iterations: dco_decode_u_32(arr[2]),
+      totalUs: dco_decode_u_64(arr[3]),
+      avgUs: dco_decode_u_64(arr[4]),
+      opsPerSec: dco_decode_f_64(arr[5]),
+    );
+  }
+
+  @protected
+  BenchmarkSuiteResult dco_decode_benchmark_suite_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return BenchmarkSuiteResult(
+      results: dco_decode_list_benchmark_result(arr[0]),
+      platform: dco_decode_String(arr[1]),
+      totalDurationMs: dco_decode_u_64(arr[2]),
+    );
+  }
+
+  @protected
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
+  }
+
+  @protected
+  int dco_decode_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
   }
 
   @protected
@@ -817,6 +1606,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ciphertext: dco_decode_list_prim_u_8_strict(arr[0]),
       sharedSecret: dco_decode_list_prim_u_8_strict(arr[1]),
     );
+  }
+
+  @protected
+  EncryptThenSignPackageDto dco_decode_encrypt_then_sign_package_dto(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return EncryptThenSignPackageDto(
+      mlkemCiphertext: dco_decode_list_prim_u_8_strict(arr[0]),
+      x25519EphemeralPk: dco_decode_list_prim_u_8_strict(arr[1]),
+      encryptedPayload: dco_decode_list_prim_u_8_strict(arr[2]),
+      signature: dco_decode_list_prim_u_8_strict(arr[3]),
+      dsaAlgorithm: dco_decode_target_dsa_algorithm(arr[4]),
+      kemAlgorithm: dco_decode_target_hybrid_kem_algorithm(arr[5]),
+      aeadAlgorithm: dco_decode_target_aead_algorithm(arr[6]),
+    );
+  }
+
+  @protected
+  double dco_decode_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
   }
 
   @protected
@@ -865,6 +1679,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
+  List<BenchmarkResult> dco_decode_list_benchmark_result(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_benchmark_result).toList();
+  }
+
+  @protected
+  List<Uint8List> dco_decode_list_list_prim_u_8_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_list_prim_u_8_strict).toList();
+  }
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as List<int>;
@@ -874,6 +1706,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
   }
 
   @protected
@@ -917,6 +1755,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int dco_decode_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  BigInt dco_decode_u_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeU64(raw);
+  }
+
+  @protected
   int dco_decode_u_8(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -936,9 +1786,49 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  BenchmarkResult sse_decode_benchmark_result(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_operation = sse_decode_String(deserializer);
+    var var_algorithm = sse_decode_String(deserializer);
+    var var_iterations = sse_decode_u_32(deserializer);
+    var var_totalUs = sse_decode_u_64(deserializer);
+    var var_avgUs = sse_decode_u_64(deserializer);
+    var var_opsPerSec = sse_decode_f_64(deserializer);
+    return BenchmarkResult(
+      operation: var_operation,
+      algorithm: var_algorithm,
+      iterations: var_iterations,
+      totalUs: var_totalUs,
+      avgUs: var_avgUs,
+      opsPerSec: var_opsPerSec,
+    );
+  }
+
+  @protected
+  BenchmarkSuiteResult sse_decode_benchmark_suite_result(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_results = sse_decode_list_benchmark_result(deserializer);
+    var var_platform = sse_decode_String(deserializer);
+    var var_totalDurationMs = sse_decode_u_64(deserializer);
+    return BenchmarkSuiteResult(
+      results: var_results,
+      platform: var_platform,
+      totalDurationMs: var_totalDurationMs,
+    );
+  }
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_u_32(deserializer));
   }
 
   @protected
@@ -955,35 +1845,70 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_ciphertext = sse_decode_list_prim_u_8_strict(deserializer);
     var var_sharedSecret = sse_decode_list_prim_u_8_strict(deserializer);
     return EncapsulationDto(
-        ciphertext: var_ciphertext, sharedSecret: var_sharedSecret);
+      ciphertext: var_ciphertext,
+      sharedSecret: var_sharedSecret,
+    );
+  }
+
+  @protected
+  EncryptThenSignPackageDto sse_decode_encrypt_then_sign_package_dto(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_mlkemCiphertext = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_x25519EphemeralPk = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_encryptedPayload = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_signature = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_dsaAlgorithm = sse_decode_target_dsa_algorithm(deserializer);
+    var var_kemAlgorithm = sse_decode_target_hybrid_kem_algorithm(deserializer);
+    var var_aeadAlgorithm = sse_decode_target_aead_algorithm(deserializer);
+    return EncryptThenSignPackageDto(
+      mlkemCiphertext: var_mlkemCiphertext,
+      x25519EphemeralPk: var_x25519EphemeralPk,
+      encryptedPayload: var_encryptedPayload,
+      signature: var_signature,
+      dsaAlgorithm: var_dsaAlgorithm,
+      kemAlgorithm: var_kemAlgorithm,
+      aeadAlgorithm: var_aeadAlgorithm,
+    );
+  }
+
+  @protected
+  double sse_decode_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat64();
   }
 
   @protected
   HybridEncapsulationDto sse_decode_hybrid_encapsulation_dto(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_mlkemCiphertext = sse_decode_list_prim_u_8_strict(deserializer);
     var var_x25519EphemeralPk = sse_decode_list_prim_u_8_strict(deserializer);
     var var_sharedSecret = sse_decode_list_prim_u_8_strict(deserializer);
     return HybridEncapsulationDto(
-        mlkemCiphertext: var_mlkemCiphertext,
-        x25519EphemeralPk: var_x25519EphemeralPk,
-        sharedSecret: var_sharedSecret);
+      mlkemCiphertext: var_mlkemCiphertext,
+      x25519EphemeralPk: var_x25519EphemeralPk,
+      sharedSecret: var_sharedSecret,
+    );
   }
 
   @protected
   HybridKeyPairDto sse_decode_hybrid_key_pair_dto(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_mlkemPublicKey = sse_decode_list_prim_u_8_strict(deserializer);
     var var_x25519PublicKey = sse_decode_list_prim_u_8_strict(deserializer);
     var var_mlkemSecretKey = sse_decode_list_prim_u_8_strict(deserializer);
     var var_x25519SecretKey = sse_decode_list_prim_u_8_strict(deserializer);
     return HybridKeyPairDto(
-        mlkemPublicKey: var_mlkemPublicKey,
-        x25519PublicKey: var_x25519PublicKey,
-        mlkemSecretKey: var_mlkemSecretKey,
-        x25519SecretKey: var_x25519SecretKey);
+      mlkemPublicKey: var_mlkemPublicKey,
+      x25519PublicKey: var_x25519PublicKey,
+      mlkemSecretKey: var_mlkemSecretKey,
+      x25519SecretKey: var_x25519SecretKey,
+    );
   }
 
   @protected
@@ -1001,6 +1926,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<BenchmarkResult> sse_decode_list_benchmark_result(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <BenchmarkResult>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_benchmark_result(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Uint8List> sse_decode_list_list_prim_u_8_strict(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Uint8List>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_list_prim_u_8_strict(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -1015,6 +1980,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_u_32(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   SecurePackageDto sse_decode_secure_package_dto(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_mlkemCiphertext = sse_decode_list_prim_u_8_strict(deserializer);
@@ -1024,17 +2000,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_kemAlgorithm = sse_decode_target_hybrid_kem_algorithm(deserializer);
     var var_aeadAlgorithm = sse_decode_target_aead_algorithm(deserializer);
     return SecurePackageDto(
-        mlkemCiphertext: var_mlkemCiphertext,
-        x25519EphemeralPk: var_x25519EphemeralPk,
-        encryptedPayload: var_encryptedPayload,
-        dsaAlgorithm: var_dsaAlgorithm,
-        kemAlgorithm: var_kemAlgorithm,
-        aeadAlgorithm: var_aeadAlgorithm);
+      mlkemCiphertext: var_mlkemCiphertext,
+      x25519EphemeralPk: var_x25519EphemeralPk,
+      encryptedPayload: var_encryptedPayload,
+      dsaAlgorithm: var_dsaAlgorithm,
+      kemAlgorithm: var_kemAlgorithm,
+      aeadAlgorithm: var_aeadAlgorithm,
+    );
   }
 
   @protected
   TargetAeadAlgorithm sse_decode_target_aead_algorithm(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return TargetAeadAlgorithm.values[inner];
@@ -1042,7 +2020,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   TargetDsaAlgorithm sse_decode_target_dsa_algorithm(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return TargetDsaAlgorithm.values[inner];
@@ -1050,7 +2029,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   TargetHybridKemAlgorithm sse_decode_target_hybrid_kem_algorithm(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return TargetHybridKemAlgorithm.values[inner];
@@ -1058,10 +2038,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   TargetKemAlgorithm sse_decode_target_kem_algorithm(
-      SseDeserializer deserializer) {
+    SseDeserializer deserializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return TargetKemAlgorithm.values[inner];
+  }
+
+  @protected
+  int sse_decode_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint32();
+  }
+
+  @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getBigUint64();
   }
 
   @protected
@@ -1082,14 +2075,47 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_benchmark_result(
+    BenchmarkResult self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.operation, serializer);
+    sse_encode_String(self.algorithm, serializer);
+    sse_encode_u_32(self.iterations, serializer);
+    sse_encode_u_64(self.totalUs, serializer);
+    sse_encode_u_64(self.avgUs, serializer);
+    sse_encode_f_64(self.opsPerSec, serializer);
+  }
+
+  @protected
+  void sse_encode_benchmark_suite_result(
+    BenchmarkSuiteResult self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_benchmark_result(self.results, serializer);
+    sse_encode_String(self.platform, serializer);
+    sse_encode_u_64(self.totalDurationMs, serializer);
+  }
+
+  @protected
   void sse_encode_bool(bool self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self ? 1 : 0);
   }
 
   @protected
+  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self, serializer);
+  }
+
+  @protected
   void sse_encode_dsa_key_pair_dto(
-      DsaKeyPairDto self, SseSerializer serializer) {
+    DsaKeyPairDto self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(self.publicKey, serializer);
     sse_encode_list_prim_u_8_strict(self.secretKey, serializer);
@@ -1097,15 +2123,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_encapsulation_dto(
-      EncapsulationDto self, SseSerializer serializer) {
+    EncapsulationDto self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(self.ciphertext, serializer);
     sse_encode_list_prim_u_8_strict(self.sharedSecret, serializer);
   }
 
   @protected
+  void sse_encode_encrypt_then_sign_package_dto(
+    EncryptThenSignPackageDto self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.mlkemCiphertext, serializer);
+    sse_encode_list_prim_u_8_strict(self.x25519EphemeralPk, serializer);
+    sse_encode_list_prim_u_8_strict(self.encryptedPayload, serializer);
+    sse_encode_list_prim_u_8_strict(self.signature, serializer);
+    sse_encode_target_dsa_algorithm(self.dsaAlgorithm, serializer);
+    sse_encode_target_hybrid_kem_algorithm(self.kemAlgorithm, serializer);
+    sse_encode_target_aead_algorithm(self.aeadAlgorithm, serializer);
+  }
+
+  @protected
+  void sse_encode_f_64(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat64(self);
+  }
+
+  @protected
   void sse_encode_hybrid_encapsulation_dto(
-      HybridEncapsulationDto self, SseSerializer serializer) {
+    HybridEncapsulationDto self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(self.mlkemCiphertext, serializer);
     sse_encode_list_prim_u_8_strict(self.x25519EphemeralPk, serializer);
@@ -1114,7 +2165,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_hybrid_key_pair_dto(
-      HybridKeyPairDto self, SseSerializer serializer) {
+    HybridKeyPairDto self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(self.mlkemPublicKey, serializer);
     sse_encode_list_prim_u_8_strict(self.x25519PublicKey, serializer);
@@ -1136,25 +2189,75 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_list_prim_u_8_loose(
-      List<int> self, SseSerializer serializer) {
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
-    serializer.buffer
-        .putUint8List(self is Uint8List ? self : Uint8List.fromList(self));
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_benchmark_result(
+    List<BenchmarkResult> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_benchmark_result(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_list_prim_u_8_strict(
+    List<Uint8List> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_list_prim_u_8_strict(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_prim_u_8_loose(
+    List<int> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putUint8List(
+      self is Uint8List ? self : Uint8List.fromList(self),
+    );
   }
 
   @protected
   void sse_encode_list_prim_u_8_strict(
-      Uint8List self, SseSerializer serializer) {
+    Uint8List self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_32(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_secure_package_dto(
-      SecurePackageDto self, SseSerializer serializer) {
+    SecurePackageDto self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_prim_u_8_strict(self.mlkemCiphertext, serializer);
     sse_encode_list_prim_u_8_strict(self.x25519EphemeralPk, serializer);
@@ -1166,30 +2269,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void sse_encode_target_aead_algorithm(
-      TargetAeadAlgorithm self, SseSerializer serializer) {
+    TargetAeadAlgorithm self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
   }
 
   @protected
   void sse_encode_target_dsa_algorithm(
-      TargetDsaAlgorithm self, SseSerializer serializer) {
+    TargetDsaAlgorithm self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
   }
 
   @protected
   void sse_encode_target_hybrid_kem_algorithm(
-      TargetHybridKemAlgorithm self, SseSerializer serializer) {
+    TargetHybridKemAlgorithm self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
   }
 
   @protected
   void sse_encode_target_kem_algorithm(
-      TargetKemAlgorithm self, SseSerializer serializer) {
+    TargetKemAlgorithm self,
+    SseSerializer serializer,
+  ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint32(self);
+  }
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putBigUint64(self);
   }
 
   @protected

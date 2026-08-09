@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:typed_data';
 
 import 'package:quantum_crypto/src/core/enums/dsa_algorithm.dart';
@@ -6,7 +7,21 @@ import 'package:quantum_crypto/src/core/models/key_pair.dart';
 
 import '../../rust/api/dsa_api.dart' as rust_api;
 
-final class MlDsaService implements DsaService {
+final
+
+    /// Internal implementation of `MlDsaService`.
+    ///
+    /// **Warning**: Do not use this class directly. Always interact with
+    /// the cryptographic functions via the [QuantumCrypto] facade to ensure
+    /// correct initialization and memory safety.
+    ///
+    /// Example:
+    /// ```dart
+    /// // Correct usage:
+    /// final result = await QuantumCrypto.kem.generateKeyPair(KemAlgorithm.mlKem768);
+    /// ```
+    class MlDsaService implements DsaService {
+  /// Creates an internal instance of [MlDsaService].
   const MlDsaService();
 
   @override

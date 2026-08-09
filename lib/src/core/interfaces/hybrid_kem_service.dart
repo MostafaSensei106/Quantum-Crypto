@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:typed_data';
 import 'package:quantum_crypto/src/core/enums/hybrid_kem_algorithm.dart';
 import 'package:quantum_crypto/src/core/models/hybrid_key_pair.dart';

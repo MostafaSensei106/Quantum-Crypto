@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:typed_data';
 import 'package:quantum_crypto/src/core/enums/hybrid_kem_algorithm.dart';
 import 'package:quantum_crypto/src/core/interfaces/hybrid_kem_service.dart';
@@ -5,7 +6,21 @@ import 'package:quantum_crypto/src/core/models/hybrid_encapsulation_result.dart'
 import 'package:quantum_crypto/src/core/models/hybrid_key_pair.dart';
 import '../../rust/api/hybrid_kem_api.dart' as rust_api;
 
-final class HybridKemServiceImpl implements HybridKemService {
+final
+
+    /// Internal implementation of `HybridKemServiceImpl`.
+    ///
+    /// **Warning**: Do not use this class directly. Always interact with
+    /// the cryptographic functions via the [QuantumCrypto] facade to ensure
+    /// correct initialization and memory safety.
+    ///
+    /// Example:
+    /// ```dart
+    /// // Correct usage:
+    /// final result = await QuantumCrypto.kem.generateKeyPair(KemAlgorithm.mlKem768);
+    /// ```
+    class HybridKemServiceImpl implements HybridKemService {
+  /// Creates an internal instance of [HybridKemServiceImpl].
   const HybridKemServiceImpl();
 
   rust_api.TargetHybridKemAlgorithm _mapToRustAlgorithm(

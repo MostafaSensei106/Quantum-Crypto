@@ -11,21 +11,16 @@ Future<void> main() async {
 
   // Initialize the FFI bindings
   log('[INFO] Initializing QuantumCrypto Rust bindings...');
-  final initStopwatch = Stopwatch()..start();
   await QuantumCrypto.init();
-  log(
-    '[INFO] Initialization completed in ${initStopwatch.elapsedMilliseconds} ms.\n',
-  );
+  log('[INFO] Initialization completed.\n');
 
   // =========================================================
   // 1. Pure ML-KEM (Key Encapsulation Mechanism)
   // =========================================================
   log('--- 1. Pure ML-KEM (Post-Quantum Key Exchange) ---');
-  final kemAlgo =
-      KemAlgorithm.mlKem1024; // Using highest security level for demonstration
+  final kemAlgo = KemAlgorithm.mlKem768; // NIST Security Level 3
   log('[KEM] Using Algorithm: ${kemAlgo.name}');
 
-  final kemWatch = Stopwatch()..start();
   final kemKeyPair = await QuantumCrypto.kem.generateKeyPair(kemAlgo);
   log(
     '[KEM] KeyPair generated. Public Key: ${kemKeyPair.publicKey.length} bytes | Secret Key: ${kemKeyPair.secretKey.length} bytes',
@@ -36,7 +31,7 @@ Future<void> main() async {
     publicKey: kemKeyPair.publicKey,
   );
   log(
-    '[KEM] Encapsulated. Ciphertext: ${kemEncapsulation.ciphertext.length} bytes | Shared Secret: ${kemEncapsulation.sharedSecret.length} bytes',
+    '[KEM] Encapsulated. Ciphertext: ${kemEncapsulation.ciphertext.length} bytes',
   );
 
   final kemDecapsulated = await QuantumCrypto.kem.decapsulate(
@@ -45,29 +40,21 @@ Future<void> main() async {
     secretKey: kemKeyPair.secretKey,
   );
   final kemMatch = _bytesEquals(kemEncapsulation.sharedSecret, kemDecapsulated);
-  log(
-    '[KEM] Decapsulated Shared Secret length: ${kemDecapsulated.length} bytes',
-  );
-  log(
-    '[KEM] Shared Secret Match: ${kemMatch ? "✅ SUCCESS" : "❌ FAILED"} (took ${kemWatch.elapsedMilliseconds} ms)\n',
-  );
+  log('[KEM] Shared Secret Match: ${kemMatch ? "✅ SUCCESS" : "❌ FAILED"}\n');
 
   // =========================================================
   // 2. Pure ML-DSA (Digital Signature Algorithm)
   // =========================================================
   log('--- 2. Pure ML-DSA (Post-Quantum Digital Signatures) ---');
-  final dsaAlgo = DsaAlgorithm.mlDsa87; // Using highest security level
+  final dsaAlgo = DsaAlgorithm.mlDsa65;
   log('[DSA] Using Algorithm: ${dsaAlgo.name}');
 
-  final dsaWatch = Stopwatch()..start();
   final dsaKeyPair = await QuantumCrypto.dsa.generateKeyPair(dsaAlgo);
   log(
     '[DSA] KeyPair generated. Public Key: ${dsaKeyPair.publicKey.length} bytes | Secret Key: ${dsaKeyPair.secretKey.length} bytes',
   );
 
-  final document = Uint8List.fromList(
-    utf8.encode('Highly sensitive document requiring PQ signature.'),
-  );
+  final document = Uint8List.fromList(utf8.encode('Critical Contract'));
   final signature = await QuantumCrypto.dsa.sign(
     algorithm: dsaAlgo,
     message: document,
@@ -81,9 +68,7 @@ Future<void> main() async {
     signature: signature,
     publicKey: dsaKeyPair.publicKey,
   );
-  log(
-    '[DSA] Signature Verification: ${dsaValid ? "✅ VALID" : "❌ INVALID"} (took ${dsaWatch.elapsedMilliseconds} ms)\n',
-  );
+  log('[DSA] Signature Verification: ${dsaValid ? "✅ VALID" : "❌ INVALID"}\n');
 
   // =========================================================
   // 3. Hybrid KEM (ML-KEM + X25519)
@@ -92,21 +77,8 @@ Future<void> main() async {
   final hybridAlgo = HybridKemAlgorithm.mlKem768X25519;
   log('[HYBRID] Using Algorithm: ${hybridAlgo.name}');
 
-  final hybridWatch = Stopwatch()..start();
   final hybridKeyPair = await QuantumCrypto.hybrid.generateKeyPair(hybridAlgo);
   log('[HYBRID] KeyPair generated.');
-  log(
-    '         - ML-KEM Public Key: ${hybridKeyPair.mlKemPublicKey.length} bytes',
-  );
-  log(
-    '         - X25519 Public Key: ${hybridKeyPair.x25519PublicKey.length} bytes',
-  );
-  log(
-    '         - ML-KEM Secret Key: ${hybridKeyPair.mlKemSecretKey.length} bytes',
-  );
-  log(
-    '         - X25519 Secret Key: ${hybridKeyPair.x25519SecretKey.length} bytes',
-  );
 
   final hybridEncapsulation = await QuantumCrypto.hybrid.encapsulate(
     algorithm: hybridAlgo,
@@ -114,15 +86,6 @@ Future<void> main() async {
     x25519PublicKey: hybridKeyPair.x25519PublicKey,
   );
   log('[HYBRID] Encapsulated.');
-  log(
-    '         - ML-KEM Ciphertext: ${hybridEncapsulation.mlKemCiphertext.length} bytes',
-  );
-  log(
-    '         - X25519 Ephemeral PK: ${hybridEncapsulation.x25519EphemeralPk.length} bytes',
-  );
-  log(
-    '         - Derived Shared Secret: ${hybridEncapsulation.sharedSecret.length} bytes',
-  );
 
   final hybridDecapsulated = await QuantumCrypto.hybrid.decapsulate(
     algorithm: hybridAlgo,
@@ -137,33 +100,25 @@ Future<void> main() async {
     hybridDecapsulated,
   );
   log(
-    '[HYBRID] Shared Secret Match: ${hybridMatch ? "✅ SUCCESS" : "❌ FAILED"} (took ${hybridWatch.elapsedMilliseconds} ms)\n',
+    '[HYBRID] Shared Secret Match: ${hybridMatch ? "✅ SUCCESS" : "❌ FAILED"}\n',
   );
 
   // =========================================================
   // 4. AEAD Symmetric Encryption
   // =========================================================
-  log('--- 4. AEAD Encryption (ChaCha20-Poly1305) ---');
-  final aeadAlgo = AeadAlgorithm.chaCha20Poly1305;
+  log('--- 4. AEAD Encryption (AES-256-GCM) ---');
+  final aeadAlgo = AeadAlgorithm.aes256Gcm;
   log('[AEAD] Using Algorithm: ${aeadAlgo.name}');
 
-  // We use the 32-byte shared secret from the Hybrid KEM step
-  final symmetricKey = hybridEncapsulation.sharedSecret;
-  final payload = Uint8List.fromList(
-    utf8.encode('Top Secret Post-Quantum Data 🕵️‍♂️'),
-  );
-  log('[AEAD] Original payload size: ${payload.length} bytes');
-  log('[AEAD] Symmetric key size: ${symmetricKey.length} bytes');
+  final symmetricKey = hybridEncapsulation.sharedSecret; // 32-byte key
+  final payload = Uint8List.fromList(utf8.encode('Secret Data'));
 
-  final aeadWatch = Stopwatch()..start();
   final ciphertextWithNonce = await QuantumCrypto.aead.encrypt(
     algorithm: aeadAlgo,
     key: symmetricKey,
     plaintext: payload,
   );
-  log(
-    '[AEAD] Encrypted payload size: ${ciphertextWithNonce.length} bytes (Payload + 12-byte Nonce + 16-byte Poly1305 Tag)',
-  );
+  log('[AEAD] Encrypted payload size: ${ciphertextWithNonce.length} bytes');
 
   final decryptedPayload = await QuantumCrypto.aead.decrypt(
     algorithm: aeadAlgo,
@@ -173,73 +128,42 @@ Future<void> main() async {
 
   final aeadMatch = _bytesEquals(payload, decryptedPayload);
   log('[AEAD] Decrypted text: "${utf8.decode(decryptedPayload)}"');
-  log(
-    '[AEAD] Decryption Match: ${aeadMatch ? "✅ SUCCESS" : "❌ FAILED"} (took ${aeadWatch.elapsedMilliseconds} ms)\n',
-  );
+  log('[AEAD] Decryption Match: ${aeadMatch ? "✅ SUCCESS" : "❌ FAILED"}\n');
 
   // =========================================================
   // 5. Key Serialization & Utilities
   // =========================================================
   log('--- 5. Key Serialization Helpers ---');
-  final hexKey = await QuantumCrypto.keys.bytesToHex(symmetricKey);
-  log('[SERIALIZE] Symmetric Key (Hex)    [${hexKey.length} chars]: $hexKey');
+  final hexKey = await QuantumCrypto.keys.bytesToHex(kemKeyPair.publicKey);
+  log('[SERIALIZE] Public Key (Hex)    [${hexKey.length} chars]: ...');
 
-  final b64Key = await QuantumCrypto.keys.bytesToBase64(symmetricKey);
-  log('[SERIALIZE] Symmetric Key (Base64) [${b64Key.length} chars]: $b64Key\n');
+  final b64Key = await QuantumCrypto.keys.bytesToBase64(kemKeyPair.publicKey);
+  log('[SERIALIZE] Public Key (Base64) [${b64Key.length} chars]: ...\n');
 
   // =========================================================
-  // 6. High-Level Secure Messaging API (Sign-then-Encrypt)
+  // 6. Secure Messaging (Sign-then-Encrypt)
   // =========================================================
-  log('--- 6. High-Level Secure Messaging API (Sign-then-Encrypt) ---');
-  log(
-    '[MESSAGING] Scenario: Rawda wants to send a secure, signed message to Mostafa.',
-  );
+  log('--- 6. Secure Messaging ---');
+  final messageToMostafa = Uint8List.fromList(utf8.encode('Top Secret'));
 
-  final messagingWatch = Stopwatch()..start();
-
-  // Rawda Signs and Encrypts the message in one step (Using existing Rawda DSA & Mostafa Hybrid keys)
-  final messageToMostafa = Uint8List.fromList(
-    utf8.encode(
-      'Hello Mostafa, this is Rawda. Quantum computers cannot read this! 🔒',
-    ),
-  );
-  log('[MESSAGING] Plaintext size: ${messageToMostafa.length} bytes');
-
+  // We use signAndEncrypt as defined in the library
   final securePackage = await QuantumCrypto.messaging.signAndEncrypt(
     message: messageToMostafa,
-    senderDsaSecretKey: dsaKeyPair.secretKey, // Rawda's signing key
-    recipientMlKemPublicKey:
-        hybridKeyPair.mlKemPublicKey, // Mostafa's KEM public key
-    recipientX25519PublicKey:
-        hybridKeyPair.x25519PublicKey, // Mostafa's X25519 public key
-    dsaAlgorithm: dsaAlgo, // Use the same algorithm (ML-DSA-87) as the key pair
+    senderDsaSecretKey: dsaKeyPair.secretKey,
+    recipientMlKemPublicKey: hybridKeyPair.mlKemPublicKey,
+    recipientX25519PublicKey: hybridKeyPair.x25519PublicKey,
+    dsaAlgorithm: dsaAlgo,
     kemAlgorithm: HybridKemAlgorithm.mlKem768X25519,
     aeadAlgorithm: AeadAlgorithm.aes256Gcm,
   );
+  log('[MESSAGING] Generated Secure Package.');
 
-  log('[MESSAGING] Generated Secure Package:');
-  log(
-    '            - ML-KEM Ciphertext: ${securePackage.mlKemCiphertext.length} bytes',
-  );
-  log(
-    '            - X25519 Ephemeral PK: ${securePackage.x25519EphemeralPk.length} bytes',
-  );
-  log(
-    '            - Encrypted Payload: ${securePackage.encryptedPayload.length} bytes',
-  );
-  log(
-    '            - Algorithms: ${securePackage.dsaAlgorithm.name} | ${securePackage.kemAlgorithm.name} | ${securePackage.aeadAlgorithm.name}',
-  );
-
-  // Mostafa Decrypts and Verifies the signature in one step
   final verifiedDecryptedMessage = await QuantumCrypto.messaging
       .decryptAndVerify(
         package: securePackage,
-        recipientMlKemSecretKey:
-            hybridKeyPair.mlKemSecretKey, // Mostafa's KEM secret key
-        recipientX25519SecretKey:
-            hybridKeyPair.x25519SecretKey, // Mostafa's X25519 secret key
-        senderDsaPublicKey: dsaKeyPair.publicKey, // Rawda's signing public key
+        recipientMlKemSecretKey: hybridKeyPair.mlKemSecretKey,
+        recipientX25519SecretKey: hybridKeyPair.x25519SecretKey,
+        senderDsaPublicKey: dsaKeyPair.publicKey,
       );
 
   final messagingMatch = _bytesEquals(
@@ -247,11 +171,64 @@ Future<void> main() async {
     verifiedDecryptedMessage,
   );
   log(
-    '[MESSAGING] Mostafa verified and decrypted: "${utf8.decode(verifiedDecryptedMessage)}"',
+    '[MESSAGING] Message verified and decrypted: "${utf8.decode(verifiedDecryptedMessage)}"',
   );
-  log(
-    '[MESSAGING] Sign-then-Encrypt Pipeline: ${messagingMatch ? "✅ SUCCESS" : "❌ FAILED"} (took ${messagingWatch.elapsedMilliseconds} ms)\n',
+  log('[MESSAGING] Pipeline: ${messagingMatch ? "✅ SUCCESS" : "❌ FAILED"}\n');
+
+  // =========================================================
+  // 7. Streaming AEAD Encryption
+  // =========================================================
+  log('--- 7. Streaming AEAD Encryption ---');
+  final largeData = Uint8List.fromList(utf8.encode('Large Data Chunk ' * 100));
+
+  final encryptedStream = await QuantumCrypto.streaming.streamEncrypt(
+    algorithm: AeadAlgorithm.chaCha20Poly1305,
+    key: symmetricKey,
+    plaintext: largeData,
+    chunkSize: 65536,
   );
+  log('[STREAMING] Encrypted stream parts: ${encryptedStream.length}');
+
+  final decryptedStream = await QuantumCrypto.streaming.streamDecrypt(
+    key: symmetricKey,
+    encryptedData: encryptedStream,
+  );
+  final streamMatch = _bytesEquals(largeData, decryptedStream);
+  log('[STREAMING] Match: ${streamMatch ? "✅ SUCCESS" : "❌ FAILED"}\n');
+
+  // =========================================================
+  // 8. Key Derivation Function (HKDF)
+  // =========================================================
+  log('--- 8. Key Derivation Function (HKDF) ---');
+  final derivedKey = await QuantumCrypto.kdf.derive(
+    sharedSecret: kemEncapsulation.sharedSecret,
+    info: Uint8List.fromList(utf8.encode('app_encryption_key')),
+    outputLength: 32,
+  );
+  log('[KDF] Derived Key length: ${derivedKey.length} bytes\n');
+
+  // =========================================================
+  // 9. Deterministic Seed Generation
+  // =========================================================
+  log('--- 9. Deterministic Seed Generation ---');
+  final masterSeed = await QuantumCrypto.seed.generateSeed();
+  log('[SEED] Master Seed length: ${masterSeed.length} bytes');
+
+  await QuantumCrypto.seed.deriveKey(
+    seed: masterSeed,
+    purpose: 'ml-kem-key',
+    keyIndex: 0,
+  );
+  log('[SEED] Derived ML-KEM Key pair generated.');
+
+  await QuantumCrypto.seed.deriveX25519Key(seed: masterSeed, keyIndex: 0);
+  log('[SEED] Derived X25519 Key pair generated.');
+
+  final derivedAeadKey = await QuantumCrypto.seed.deriveAeadKey(
+    seed: masterSeed,
+    keyIndex: 0,
+  );
+  log('[SEED] Derived AEAD Key length: ${derivedAeadKey.length} bytes\n');
 
   log('=============================================');
 }

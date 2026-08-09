@@ -8,22 +8,30 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
 
-Future<KeyPairDto> generateKemKeypair(
-        {required TargetKemAlgorithm algorithm}) =>
+Future<KeyPairDto> generateKemKeypair({
+  required TargetKemAlgorithm algorithm,
+}) =>
     RustLib.instance.api.crateApiKemApiGenerateKemKeypair(algorithm: algorithm);
 
-Future<EncapsulationDto> kemEncapsulate(
-        {required TargetKemAlgorithm algorithm,
-        required List<int> publicKey}) =>
+Future<EncapsulationDto> kemEncapsulate({
+  required TargetKemAlgorithm algorithm,
+  required List<int> publicKey,
+}) =>
     RustLib.instance.api.crateApiKemApiKemEncapsulate(
-        algorithm: algorithm, publicKey: publicKey);
+      algorithm: algorithm,
+      publicKey: publicKey,
+    );
 
-Future<Uint8List> kemDecapsulate(
-        {required TargetKemAlgorithm algorithm,
-        required List<int> ciphertext,
-        required List<int> secretKey}) =>
+Future<Uint8List> kemDecapsulate({
+  required TargetKemAlgorithm algorithm,
+  required List<int> ciphertext,
+  required List<int> secretKey,
+}) =>
     RustLib.instance.api.crateApiKemApiKemDecapsulate(
-        algorithm: algorithm, ciphertext: ciphertext, secretKey: secretKey);
+      algorithm: algorithm,
+      ciphertext: ciphertext,
+      secretKey: secretKey,
+    );
 
 class EncapsulationDto {
   final Uint8List ciphertext;
@@ -50,10 +58,7 @@ class KeyPairDto {
   final Uint8List publicKey;
   final Uint8List secretKey;
 
-  const KeyPairDto({
-    required this.publicKey,
-    required this.secretKey,
-  });
+  const KeyPairDto({required this.publicKey, required this.secretKey});
 
   @override
   int get hashCode => publicKey.hashCode ^ secretKey.hashCode;
@@ -67,9 +72,4 @@ class KeyPairDto {
           secretKey == other.secretKey;
 }
 
-enum TargetKemAlgorithm {
-  mlKem512,
-  mlKem768,
-  mlKem1024,
-  ;
-}
+enum TargetKemAlgorithm { mlKem512, mlKem768, mlKem1024 }

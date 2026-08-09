@@ -4,11 +4,15 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/aead_api.dart';
+import 'api/benchmark_api.dart';
 import 'api/dsa_api.dart';
 import 'api/hybrid_kem_api.dart';
+import 'api/kdf_api.dart';
 import 'api/kem_api.dart';
 import 'api/key_serialization_api.dart';
 import 'api/secure_messaging_api.dart';
+import 'api/seed_keygen_api.dart';
+import 'api/streaming_api.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
@@ -27,13 +31,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  BenchmarkResult dco_decode_benchmark_result(dynamic raw);
+
+  @protected
+  BenchmarkSuiteResult dco_decode_benchmark_suite_result(dynamic raw);
+
+  @protected
   bool dco_decode_bool(dynamic raw);
+
+  @protected
+  int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
   DsaKeyPairDto dco_decode_dsa_key_pair_dto(dynamic raw);
 
   @protected
   EncapsulationDto dco_decode_encapsulation_dto(dynamic raw);
+
+  @protected
+  EncryptThenSignPackageDto dco_decode_encrypt_then_sign_package_dto(
+    dynamic raw,
+  );
+
+  @protected
+  double dco_decode_f_64(dynamic raw);
 
   @protected
   HybridEncapsulationDto dco_decode_hybrid_encapsulation_dto(dynamic raw);
@@ -48,10 +69,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KeyPairDto dco_decode_key_pair_dto(dynamic raw);
 
   @protected
+  List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
+  List<BenchmarkResult> dco_decode_list_benchmark_result(dynamic raw);
+
+  @protected
+  List<Uint8List> dco_decode_list_list_prim_u_8_strict(dynamic raw);
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
   SecurePackageDto dco_decode_secure_package_dto(dynamic raw);
@@ -69,6 +102,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TargetKemAlgorithm dco_decode_target_kem_algorithm(dynamic raw);
 
   @protected
+  int dco_decode_u_32(dynamic raw);
+
+  @protected
+  BigInt dco_decode_u_64(dynamic raw);
+
+  @protected
   int dco_decode_u_8(dynamic raw);
 
   @protected
@@ -78,7 +117,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  BenchmarkResult sse_decode_benchmark_result(SseDeserializer deserializer);
+
+  @protected
+  BenchmarkSuiteResult sse_decode_benchmark_suite_result(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
   DsaKeyPairDto sse_decode_dsa_key_pair_dto(SseDeserializer deserializer);
@@ -87,8 +137,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EncapsulationDto sse_decode_encapsulation_dto(SseDeserializer deserializer);
 
   @protected
+  EncryptThenSignPackageDto sse_decode_encrypt_then_sign_package_dto(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  double sse_decode_f_64(SseDeserializer deserializer);
+
+  @protected
   HybridEncapsulationDto sse_decode_hybrid_encapsulation_dto(
-      SseDeserializer deserializer);
+    SseDeserializer deserializer,
+  );
 
   @protected
   HybridKeyPairDto sse_decode_hybrid_key_pair_dto(SseDeserializer deserializer);
@@ -100,29 +159,55 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KeyPairDto sse_decode_key_pair_dto(SseDeserializer deserializer);
 
   @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<BenchmarkResult> sse_decode_list_benchmark_result(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<Uint8List> sse_decode_list_list_prim_u_8_strict(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
   SecurePackageDto sse_decode_secure_package_dto(SseDeserializer deserializer);
 
   @protected
   TargetAeadAlgorithm sse_decode_target_aead_algorithm(
-      SseDeserializer deserializer);
+    SseDeserializer deserializer,
+  );
 
   @protected
   TargetDsaAlgorithm sse_decode_target_dsa_algorithm(
-      SseDeserializer deserializer);
+    SseDeserializer deserializer,
+  );
 
   @protected
   TargetHybridKemAlgorithm sse_decode_target_hybrid_kem_algorithm(
-      SseDeserializer deserializer);
+    SseDeserializer deserializer,
+  );
 
   @protected
   TargetKemAlgorithm sse_decode_target_kem_algorithm(
-      SseDeserializer deserializer);
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  int sse_decode_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -134,23 +219,55 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_benchmark_result(
+    BenchmarkResult self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_benchmark_suite_result(
+    BenchmarkSuiteResult self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
   void sse_encode_dsa_key_pair_dto(
-      DsaKeyPairDto self, SseSerializer serializer);
+    DsaKeyPairDto self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_encapsulation_dto(
-      EncapsulationDto self, SseSerializer serializer);
+    EncapsulationDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_encrypt_then_sign_package_dto(
+    EncryptThenSignPackageDto self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
   void sse_encode_hybrid_encapsulation_dto(
-      HybridEncapsulationDto self, SseSerializer serializer);
+    HybridEncapsulationDto self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_hybrid_key_pair_dto(
-      HybridKeyPairDto self, SseSerializer serializer);
+    HybridKeyPairDto self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
@@ -159,31 +276,67 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_key_pair_dto(KeyPairDto self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_benchmark_result(
+    List<BenchmarkResult> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_list_prim_u_8_strict(
+    List<Uint8List> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
-      Uint8List self, SseSerializer serializer);
+    Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_secure_package_dto(
-      SecurePackageDto self, SseSerializer serializer);
+    SecurePackageDto self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_target_aead_algorithm(
-      TargetAeadAlgorithm self, SseSerializer serializer);
+    TargetAeadAlgorithm self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_target_dsa_algorithm(
-      TargetDsaAlgorithm self, SseSerializer serializer);
+    TargetDsaAlgorithm self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_target_hybrid_kem_algorithm(
-      TargetHybridKemAlgorithm self, SseSerializer serializer);
+    TargetHybridKemAlgorithm self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_target_kem_algorithm(
-      TargetKemAlgorithm self, SseSerializer serializer);
+    TargetKemAlgorithm self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

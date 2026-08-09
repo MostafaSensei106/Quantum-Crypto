@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 enum HybridKemAlgorithm {
   mlKem512X25519,
   mlKem768X25519,

@@ -4,3 +4,6 @@ pub mod traits;
 pub mod zeroize;
 pub mod hybrid_kem;
 pub mod aead;
+pub mod streaming;
+pub mod error;
+pub mod seed_keygen;
