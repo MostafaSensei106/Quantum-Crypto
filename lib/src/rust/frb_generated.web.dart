@@ -6,8 +6,12 @@
 // Static analysis wrongly picks the IO variant, thus ignore this
 // ignore_for_file: argument_type_not_assignable
 
+import 'api/aead_api.dart';
 import 'api/dsa_api.dart';
+import 'api/hybrid_kem_api.dart';
 import 'api/kem_api.dart';
+import 'api/key_serialization_api.dart';
+import 'api/secure_messaging_api.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -34,6 +38,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EncapsulationDto dco_decode_encapsulation_dto(dynamic raw);
 
   @protected
+  HybridEncapsulationDto dco_decode_hybrid_encapsulation_dto(dynamic raw);
+
+  @protected
+  HybridKeyPairDto dco_decode_hybrid_key_pair_dto(dynamic raw);
+
+  @protected
   int dco_decode_i_32(dynamic raw);
 
   @protected
@@ -46,13 +56,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  SecurePackageDto dco_decode_secure_package_dto(dynamic raw);
+
+  @protected
+  TargetAeadAlgorithm dco_decode_target_aead_algorithm(dynamic raw);
+
+  @protected
   TargetDsaAlgorithm dco_decode_target_dsa_algorithm(dynamic raw);
+
+  @protected
+  TargetHybridKemAlgorithm dco_decode_target_hybrid_kem_algorithm(dynamic raw);
 
   @protected
   TargetKemAlgorithm dco_decode_target_kem_algorithm(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
+
+  @protected
+  void dco_decode_unit(dynamic raw);
 
   @protected
   String sse_decode_String(SseDeserializer deserializer);
@@ -67,6 +89,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EncapsulationDto sse_decode_encapsulation_dto(SseDeserializer deserializer);
 
   @protected
+  HybridEncapsulationDto sse_decode_hybrid_encapsulation_dto(
+      SseDeserializer deserializer);
+
+  @protected
+  HybridKeyPairDto sse_decode_hybrid_key_pair_dto(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
@@ -79,7 +108,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  SecurePackageDto sse_decode_secure_package_dto(SseDeserializer deserializer);
+
+  @protected
+  TargetAeadAlgorithm sse_decode_target_aead_algorithm(
+      SseDeserializer deserializer);
+
+  @protected
   TargetDsaAlgorithm sse_decode_target_dsa_algorithm(
+      SseDeserializer deserializer);
+
+  @protected
+  TargetHybridKemAlgorithm sse_decode_target_hybrid_kem_algorithm(
       SseDeserializer deserializer);
 
   @protected
@@ -88,6 +128,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
+
+  @protected
+  void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
   void sse_encode_String(String self, SseSerializer serializer);
@@ -104,6 +147,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       EncapsulationDto self, SseSerializer serializer);
 
   @protected
+  void sse_encode_hybrid_encapsulation_dto(
+      HybridEncapsulationDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_hybrid_key_pair_dto(
+      HybridKeyPairDto self, SseSerializer serializer);
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
@@ -117,8 +168,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       Uint8List self, SseSerializer serializer);
 
   @protected
+  void sse_encode_secure_package_dto(
+      SecurePackageDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_target_aead_algorithm(
+      TargetAeadAlgorithm self, SseSerializer serializer);
+
+  @protected
   void sse_encode_target_dsa_algorithm(
       TargetDsaAlgorithm self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_target_hybrid_kem_algorithm(
+      TargetHybridKemAlgorithm self, SseSerializer serializer);
 
   @protected
   void sse_encode_target_kem_algorithm(
@@ -126,6 +189,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_unit(void self, SseSerializer serializer);
 }
 
 // Section: wire_class

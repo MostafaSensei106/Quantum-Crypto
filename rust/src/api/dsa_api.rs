@@ -1,5 +1,6 @@
 use crate::factory::dsa_factory::{DsaAlgorithm, DsaFactory};
 
+#[derive(Clone, Copy)]
 pub enum TargetDsaAlgorithm {
     MlDsa44,
     MlDsa65,
