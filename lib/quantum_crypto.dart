@@ -1,6 +1,5 @@
 library;
 
-
 // Core Enums
 export 'src/core/enums/kem_algorithm.dart';
 export 'src/core/enums/dsa_algorithm.dart';
@@ -31,4 +30,4 @@ export 'src/infrastructure/services/key_serialization_service_impl.dart';
 export 'src/infrastructure/services/secure_messaging_service_impl.dart';
 
 // Facade
-export 'src/pq_crypto.dart';
+export 'src/crypto.dart';
