@@ -1,3 +1,4 @@
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:quantum_crypto/src/core/interfaces/aead_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/dsa_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/hybrid_kem_service.dart';
@@ -30,6 +31,7 @@ import 'package:quantum_crypto/src/rust/frb_generated.dart';
 /// - Key Serialization (Hex, Base64)
 /// - Secure Messaging (Sign-then-Encrypt)
 abstract final class QuantumCrypto {
+  const QuantumCrypto._();
   static bool _isInitialized = false;
 
   /// Initializes the underlying Rust FFI bridge and cryptographic context.
@@ -44,8 +46,22 @@ abstract final class QuantumCrypto {
   ///   runApp(MyApp());
   /// }
   /// ```
+  /// On web, the WASM artifacts are pre-loaded from the Flutter asset path
+  /// (`assets/packages/quantum_crypto/web/pkg/`) so that `flutter build web`
+  /// automatically bundles them — no manual copy step needed.
+  ///
   static Future<void> init() async {
     if (_isInitialized) return;
+    if (const bool.fromEnvironment('dart.library.html')) {
+      final lib = await loadExternalLibrary(
+        const ExternalLibraryLoaderConfig(
+          stem: 'quantum_crypto',
+          ioDirectory: 'rust/target/release/',
+          webPrefix: 'assets/packages/quantum_crypto/web/pkg/',
+        ),
+      );
+      return RustLib.init(externalLibrary: lib);
+    }
     await RustLib.init();
     _isInitialized = true;
   }
