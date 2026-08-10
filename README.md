@@ -423,11 +423,23 @@ Contributions are welcome! Here’s how to get started:
 3.  Commit your changes: `git commit -m "Add amazing feature"`
 4.  Push to your branch: `git push origin feature/YourFeature`
 5.  Open a pull request.
+> 💡 Please read our **[Contributing Guidelines](CONTRIBUTING.md)** and open an issue first for major feature ideas or changes.
+
 
 ---
 ## ⚖️ License
 
-This project is licensed under the **GPL-3.0 License**.
+This project is dual-licensed:
+
+1. **Open Source License**: GPL-3.0
+   - Free to use, modify, and distribute under GPL terms.
+   - Any distributed modified version must also be GPL-3.0.
+
+2. **Commercial License**:
+   - Required for using the library in proprietary / closed-source products.
+   - Only available from the copyright holder (Mostafa Mahmoud).
+   - Contact: [mostafasensei106@gmail.com](mailto:mostafasensei106@gmail.com)
+
 See the [LICENSE](LICENSE) file for full details.
 
 <p align="center">
