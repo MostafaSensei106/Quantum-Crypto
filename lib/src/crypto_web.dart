@@ -1,1 +1,1 @@
-final class QuantumCryptoWeb {}
+// final class QuantumCryptoWeb {}
