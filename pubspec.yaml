@@ -48,9 +48,3 @@ flutter:
         ffiPlugin: true
       windows:
         ffiPlugin: true
-      web:
-        pluginClass: QuantumCryptoWeb
-        fileName: QuantumCryptoWeb
-
-assets:
-- web/pkg/
