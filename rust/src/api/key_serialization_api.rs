@@ -5,7 +5,7 @@ pub fn bytes_to_hex(data: Vec<u8>) -> String {
 }
 
 pub fn hex_to_bytes(hex: String) -> Result<Vec<u8>, String> {
-    if hex.len() % 2 != 0 {
+    if !hex.len().is_multiple_of(2) {
         return Err("Hex string has odd length".to_string());
     }
     let mut bytes = Vec::with_capacity(hex.len() / 2);

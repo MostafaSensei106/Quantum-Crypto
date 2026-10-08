@@ -53,6 +53,9 @@ pub fn sign_then_encrypt(
     })
 }
 
+// flutter_rust_bridge API boundary: parameters map 1:1 to Dart named args,
+// so grouping them into a struct would break the generated bindings.
+#[allow(clippy::too_many_arguments)]
 pub fn decrypt_then_verify(
     package_mlkem_ciphertext: Vec<u8>,
     package_x25519_ephemeral_pk: Vec<u8>,
@@ -147,6 +150,8 @@ pub fn encrypt_then_sign(
     })
 }
 
+// Same as above: keep flat args for Dart codegen compatibility.
+#[allow(clippy::too_many_arguments)]
 pub fn verify_then_decrypt(
     package_mlkem_ciphertext: Vec<u8>,
     package_x25519_ephemeral_pk: Vec<u8>,
