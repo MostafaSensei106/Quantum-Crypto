@@ -389,11 +389,11 @@ final aeadKey = await QuantumCrypto.seed.deriveAeadKey(
 
 ## ⚡ Performance Benchmarks
 
-The **Quantum-Crypto** library is meticulously optimized using Rust and FFI for blistering speed, even on heavy 1024-dimensional operations.
+The **Quantum-Crypto** library runs its cryptography in native Rust and crosses to Dart over FFI, so even heavy 1024-dimensional lattice operations stay off the UI thread.
 
 ### 📊 Comprehensive Execution Benchmarks
 
-The following benchmarks were generated using the internal benchmark suite running over 1000 iterations per step after a warmup phase. You can reproduce these results on your target platform by running:
+Measured with the in-repo Dart benchmark harness: 100 warmup + 1000 timed iterations per operation, calling the Rust engine over FFI. Reproduce on your machine with:
 
 ```bash
 flutter test test/benchmark_test.dart
@@ -401,94 +401,84 @@ flutter test test/benchmark_test.dart
 
 | Algorithm / Operation | Step | Avg (μs) | Min (μs) | Max (μs) | Median (μs) | Ops/sec |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| **ML-KEM-512** | KeyGen | 109.5 | 85.0 | 827.0 | 105.0 | 9,134.1 |
-| **ML-KEM-512** | Encapsulate | 95.9 | 82.0 | 561.0 | 93.0 | 10,423.2 |
-| **ML-KEM-512** | Decapsulate | 87.5 | 74.0 | 340.0 | 84.0 | 11,424.9 |
-| **ML-KEM-512** | Roundtrip | 212.5 | 169.0 | 520.0 | 209.0 | 4,705.5 |
-| **ML-KEM-768** | KeyGen | 80.5 | 64.0 | 3,016.0 | 74.0 | 12,428.1 |
-| **ML-KEM-768** | Encapsulate | 70.4 | 55.0 | 517.0 | 68.0 | 14,212.4 |
-| **ML-KEM-768** | Decapsulate | 72.7 | 63.0 | 271.0 | 71.0 | 13,751.9 |
-| **ML-KEM-768** | Roundtrip | 200.4 | 163.0 | 539.0 | 196.0 | 4,990.7 |
-| **ML-KEM-1024** | KeyGen | 70.8 | 59.0 | 488.0 | 66.0 | 14,117.5 |
-| **ML-KEM-1024** | Encapsulate | 64.9 | 56.0 | 335.0 | 63.0 | 15,402.9 |
-| **ML-KEM-1024** | Decapsulate | 73.4 | 60.0 | 3,597.0 | 68.0 | 13,623.8 |
-| **ML-KEM-1024** | Roundtrip | 202.8 | 180.0 | 557.0 | 198.0 | 4,930.3 |
-| **ML-DSA-44** | KeyGen | 76.6 | 65.0 | 361.0 | 76.0 | 13,054.1 |
-| **ML-DSA-44** | Sign | 125.1 | 74.0 | 2,683.0 | 108.0 | 7,993.0 |
-| **ML-DSA-44** | Verify | 72.7 | 64.0 | 284.0 | 69.0 | 13,763.7 |
-| **ML-DSA-44** | Roundtrip | 273.6 | 211.0 | 636.0 | 259.0 | 3,655.5 |
-| **ML-DSA-65** | KeyGen | 90.6 | 81.0 | 292.0 | 86.0 | 11,032.4 |
-| **ML-DSA-65** | Sign | 164.0 | 91.0 | 630.0 | 142.0 | 6,099.2 |
-| **ML-DSA-65** | Verify | 96.3 | 80.0 | 3,678.0 | 92.0 | 10,383.8 |
-| **ML-DSA-65** | Roundtrip | 370.1 | 258.0 | 897.0 | 351.0 | 2,702.3 |
-| **ML-DSA-87** | KeyGen | 121.5 | 104.0 | 502.0 | 115.0 | 8,232.3 |
-| **ML-DSA-87** | Sign | 190.1 | 116.0 | 4,441.0 | 165.0 | 5,260.6 |
-| **ML-DSA-87** | Verify | 113.1 | 101.0 | 354.0 | 108.0 | 8,839.2 |
-| **ML-DSA-87** | Roundtrip | 434.7 | 330.0 | 901.0 | 412.0 | 2,300.6 |
-| **Hybrid ML-KEM-512** | KeyGen | 74.4 | 65.0 | 353.0 | 72.0 | 13,439.2 |
-| **Hybrid ML-KEM-512** | Encapsulate | 124.2 | 111.0 | 372.0 | 119.0 | 8,050.9 |
-| **Hybrid ML-KEM-512** | Decapsulate | 106.8 | 97.0 | 990.0 | 101.0 | 9,362.7 |
-| **Hybrid ML-KEM-512** | Roundtrip | 308.9 | 275.0 | 3,768.0 | 300.0 | 3,237.7 |
-| **Hybrid ML-KEM-768** | KeyGen | 79.5 | 70.0 | 263.0 | 76.0 | 12,571.5 |
-| **Hybrid ML-KEM-768** | Encapsulate | 128.1 | 115.0 | 378.0 | 122.0 | 7,804.6 |
-| **Hybrid ML-KEM-768** | Decapsulate | 113.1 | 102.0 | 307.0 | 107.0 | 8,839.7 |
-| **Hybrid ML-KEM-768** | Roundtrip | 330.4 | 294.0 | 4,481.0 | 318.0 | 3,026.9 |
-| **Hybrid ML-KEM-1024** | KeyGen | 82.7 | 76.0 | 411.0 | 79.0 | 12,087.5 |
-| **Hybrid ML-KEM-1024** | Encapsulate | 134.1 | 120.0 | 317.0 | 127.0 | 7,459.7 |
-| **Hybrid ML-KEM-1024** | Decapsulate | 122.3 | 110.0 | 451.0 | 117.0 | 8,178.3 |
-| **Hybrid ML-KEM-1024** | Roundtrip | 351.6 | 311.0 | 3,554.0 | 343.0 | 2,844.4 |
-| **AES-256-GCM (1 KB)** | Encrypt | 52.0 | 46.0 | 354.0 | 50.0 | 19,238.9 |
-| **AES-256-GCM (1 KB)** | Decrypt | 51.0 | 43.0 | 325.0 | 49.0 | 19,604.8 |
-| **AES-256-GCM (64 KB)** | Encrypt | 322.1 | 274.0 | 3,611.0 | 311.0 | 3,104.4 |
-| **AES-256-GCM (64 KB)** | Decrypt | 307.0 | 271.0 | 631.0 | 297.0 | 3,256.8 |
-| **AES-256-GCM (1 MB)** | Encrypt | 7,311.6 | 5,068.0 | 16,810.0 | 6,658.0 | 136.8 |
-| **AES-256-GCM (1 MB)** | Decrypt | 6,862.7 | 5,669.0 | 12,551.0 | 6,547.0 | 145.7 |
-| **ChaCha20-Poly1305 (1 KB)** | Encrypt | 52.1 | 36.0 | 364.0 | 50.0 | 19,210.8 |
-| **ChaCha20-Poly1305 (1 KB)** | Decrypt | 51.1 | 47.0 | 335.0 | 49.0 | 19,576.8 |
-| **ChaCha20-Poly1305 (64 KB)** | Encrypt | 307.6 | 268.0 | 643.0 | 306.0 | 3,251.0 |
-| **ChaCha20-Poly1305 (64 KB)** | Decrypt | 304.3 | 262.0 | 4,459.0 | 299.0 | 3,286.0 |
-| **ChaCha20-Poly1305 (1 MB)** | Encrypt | 6,051.5 | 4,966.0 | 13,543.0 | 5,781.0 | 165.2 |
-| **ChaCha20-Poly1305 (1 MB)** | Decrypt | 6,913.9 | 5,543.0 | 14,450.0 | 6,517.0 | 144.6 |
-| **Streaming Encrypt (1MB, 64k)** | Process | 6,169.9 | 4,574.0 | 13,886.0 | 5,835.0 | 162.1 |
-| **Streaming Decrypt (1MB, 64k)** | Process | 6,134.9 | 4,662.0 | 15,158.0 | 5,907.0 | 163.0 |
-| **HKDF-SHA256** | Derive | 50.4 | 44.0 | 525.0 | 49.0 | 19,849.1 |
-| **Seed Generation** | Generate | 53.3 | 41.0 | 4,682.0 | 47.0 | 18,766.0 |
-| **Deterministic Key** | Derive (Kem) | 53.7 | 48.0 | 309.0 | 52.0 | 18,630.0 |
-| **Sign-then-Encrypt Pipeline** | EncryptAndSign | 271.3 | 186.0 | 701.0 | 251.0 | 3,685.9 |
-| **Sign-then-Encrypt Pipeline** | VerifyAndDecr | 189.7 | 159.0 | 3,934.0 | 182.0 | 5,272.8 |
+| **ML-KEM-512** | KeyGen | 96.8 | 78.0 | 1178.0 | 90.0 | 10326.0 |
+| **ML-KEM-512** | Encapsulate | 86.2 | 72.0 | 362.0 | 82.0 | 11607.7 |
+| **ML-KEM-512** | Decapsulate | 79.7 | 64.0 | 2068.0 | 73.0 | 12545.6 |
+| **ML-KEM-512** | Roundtrip | 192.6 | 157.0 | 469.0 | 188.0 | 5191.4 |
+| **ML-KEM-768** | KeyGen | 63.6 | 52.0 | 281.0 | 60.0 | 15729.9 |
+| **ML-KEM-768** | Encapsulate | 63.4 | 51.0 | 332.0 | 61.0 | 15770.4 |
+| **ML-KEM-768** | Decapsulate | 65.6 | 52.0 | 251.0 | 65.0 | 15235.5 |
+| **ML-KEM-768** | Roundtrip | 182.0 | 146.0 | 580.0 | 180.0 | 5495.0 |
+| **ML-KEM-1024** | KeyGen | 58.5 | 52.0 | 221.0 | 55.0 | 17099.3 |
+| **ML-KEM-1024** | Encapsulate | 56.9 | 51.0 | 384.0 | 54.0 | 17572.2 |
+| **ML-KEM-1024** | Decapsulate | 60.8 | 55.0 | 283.0 | 58.0 | 16455.8 |
+| **ML-KEM-1024** | Roundtrip | 177.9 | 162.0 | 366.0 | 176.0 | 5619.6 |
+| **ML-DSA-44** | KeyGen | 65.3 | 57.0 | 233.0 | 62.0 | 15319.3 |
+| **ML-DSA-44** | Sign | 112.2 | 67.0 | 407.0 | 99.0 | 8915.2 |
+| **ML-DSA-44** | Verify | 65.6 | 60.0 | 251.0 | 63.0 | 15252.3 |
+| **ML-DSA-44** | Roundtrip | 244.7 | 190.0 | 621.0 | 230.0 | 4087.0 |
+| **ML-DSA-65** | KeyGen | 79.8 | 74.0 | 323.0 | 76.0 | 12529.1 |
+| **ML-DSA-65** | Sign | 153.3 | 85.0 | 676.0 | 134.0 | 6523.2 |
+| **ML-DSA-65** | Verify | 81.5 | 74.0 | 464.0 | 77.0 | 12268.6 |
+| **ML-DSA-65** | Roundtrip | 306.9 | 234.0 | 700.0 | 289.0 | 3258.4 |
+| **ML-DSA-87** | KeyGen | 103.8 | 95.0 | 354.0 | 99.0 | 9632.4 |
+| **ML-DSA-87** | Sign | 172.7 | 110.0 | 547.0 | 157.0 | 5790.8 |
+| **ML-DSA-87** | Verify | 101.2 | 96.0 | 296.0 | 99.0 | 9879.5 |
+| **ML-DSA-87** | Roundtrip | 377.6 | 305.0 | 988.0 | 357.0 | 2648.1 |
+| **SLH-DSA-SHA2-128f** | KeyGen | 354.5 | 326.0 | 671.0 | 337.0 | 2821.1 |
+| **SLH-DSA-SHA2-128f** | Sign | 7400.0 | 6665.0 | 10569.0 | 7366.0 | 135.1 |
+| **SLH-DSA-SHA2-128f** | Verify | 684.3 | 638.0 | 951.0 | 654.0 | 1461.3 |
+| **SLH-DSA-SHA2-128f** | Roundtrip | 8525.5 | 7912.0 | 10089.0 | 8492.0 | 117.3 |
+| **SLH-DSA-SHA2-192f** | KeyGen | 517.9 | 449.0 | 748.0 | 486.0 | 1930.9 |
+| **SLH-DSA-SHA2-192f** | Sign | 11482.8 | 10744.0 | 13374.0 | 11430.0 | 87.1 |
+| **SLH-DSA-SHA2-192f** | Verify | 1029.8 | 899.0 | 1392.0 | 1046.0 | 971.1 |
+| **SLH-DSA-SHA2-192f** | Roundtrip | 13203.0 | 12227.0 | 17817.0 | 13172.0 | 75.7 |
+| **SLH-DSA-SHA2-256f** | KeyGen | 1393.6 | 1194.0 | 2272.0 | 1399.0 | 717.6 |
+| **SLH-DSA-SHA2-256f** | Sign | 24150.2 | 23015.0 | 25731.0 | 24092.0 | 41.4 |
+| **SLH-DSA-SHA2-256f** | Verify | 1165.9 | 972.0 | 6192.0 | 1177.0 | 857.7 |
+| **SLH-DSA-SHA2-256f** | Roundtrip | 26899.2 | 25371.0 | 33231.0 | 26879.0 | 37.2 |
+| **Hybrid ML-KEM-512** | KeyGen | 63.0 | 58.0 | 314.0 | 60.0 | 15881.1 |
+| **Hybrid ML-KEM-512** | Encapsulate | 113.1 | 106.0 | 444.0 | 109.0 | 8844.8 |
+| **Hybrid ML-KEM-512** | Decapsulate | 98.1 | 92.0 | 537.0 | 95.0 | 10189.1 |
+| **Hybrid ML-KEM-512** | Roundtrip | 276.1 | 258.0 | 522.0 | 270.0 | 3621.7 |
+| **Hybrid ML-KEM-768** | KeyGen | 78.3 | 61.0 | 460.0 | 75.0 | 12775.0 |
+| **Hybrid ML-KEM-768** | Encapsulate | 127.0 | 113.0 | 393.0 | 121.0 | 7875.2 |
+| **Hybrid ML-KEM-768** | Decapsulate | 110.4 | 98.0 | 366.0 | 104.0 | 9055.0 |
+| **Hybrid ML-KEM-768** | Roundtrip | 309.7 | 276.0 | 763.0 | 305.0 | 3229.1 |
+| **Hybrid ML-KEM-1024** | KeyGen | 78.6 | 69.0 | 352.0 | 75.0 | 12722.3 |
+| **Hybrid ML-KEM-1024** | Encapsulate | 125.5 | 115.0 | 308.0 | 119.0 | 7968.2 |
+| **Hybrid ML-KEM-1024** | Decapsulate | 111.1 | 103.0 | 295.0 | 106.0 | 9004.0 |
+| **Hybrid ML-KEM-1024** | Roundtrip | 319.5 | 290.0 | 575.0 | 317.0 | 3130.1 |
+| **AES-256-GCM (1 KB)** | Encrypt | 40.4 | 37.0 | 232.0 | 39.0 | 24735.3 |
+| **AES-256-GCM (1 KB)** | Decrypt | 39.4 | 37.0 | 206.0 | 38.0 | 25405.2 |
+| **AES-256-GCM (64 KB)** | Encrypt | 293.2 | 254.0 | 685.0 | 288.0 | 3411.2 |
+| **AES-256-GCM (64 KB)** | Decrypt | 289.0 | 250.0 | 491.0 | 287.0 | 3460.2 |
+| **AES-256-GCM (1 MB)** | Encrypt | 6348.3 | 5492.0 | 9861.0 | 6086.0 | 157.5 |
+| **AES-256-GCM (1 MB)** | Decrypt | 6189.9 | 5384.0 | 9274.0 | 6016.0 | 161.6 |
+| **ChaCha20-Poly1305 (1 KB)** | Encrypt | 42.7 | 36.0 | 1213.0 | 38.0 | 23392.4 |
+| **ChaCha20-Poly1305 (1 KB)** | Decrypt | 40.0 | 36.0 | 288.0 | 38.0 | 25018.1 |
+| **ChaCha20-Poly1305 (64 KB)** | Encrypt | 277.9 | 247.0 | 487.0 | 270.0 | 3598.4 |
+| **ChaCha20-Poly1305 (64 KB)** | Decrypt | 273.4 | 244.0 | 448.0 | 276.0 | 3657.6 |
+| **ChaCha20-Poly1305 (1 MB)** | Encrypt | 6195.7 | 5121.0 | 10439.0 | 5948.0 | 161.4 |
+| **ChaCha20-Poly1305 (1 MB)** | Decrypt | 6388.2 | 5229.0 | 11221.0 | 6039.0 | 156.5 |
+| **XChaCha20-Poly1305 (1 KB)** | Encrypt | 40.1 | 37.0 | 349.0 | 38.0 | 24929.0 |
+| **XChaCha20-Poly1305 (1 KB)** | Decrypt | 38.5 | 36.0 | 271.0 | 37.0 | 25944.4 |
+| **XChaCha20-Poly1305 (64 KB)** | Encrypt | 289.3 | 247.0 | 563.0 | 285.0 | 3457.2 |
+| **XChaCha20-Poly1305 (64 KB)** | Decrypt | 283.8 | 242.0 | 667.0 | 280.0 | 3523.8 |
+| **XChaCha20-Poly1305 (1 MB)** | Encrypt | 5678.1 | 4711.0 | 9779.0 | 5349.0 | 176.1 |
+| **XChaCha20-Poly1305 (1 MB)** | Decrypt | 6241.1 | 5019.0 | 11728.0 | 5900.0 | 160.2 |
+| **Streaming Encrypt (1MB, 64k)** | Process | 5322.8 | 4255.0 | 9965.0 | 4946.0 | 187.9 |
+| **Streaming Decrypt (1MB, 64k)** | Process | 5553.4 | 4333.0 | 10676.0 | 5341.0 | 180.1 |
+| **HKDF-SHA256** | Derive | 37.8 | 34.0 | 428.0 | 36.0 | 26440.3 |
+| **HKDF-SHA512** | Derive | 37.1 | 34.0 | 223.0 | 36.0 | 26930.2 |
+| **SHA-256 (1 KB)** | Digest | 38.8 | 35.0 | 310.0 | 38.0 | 25802.5 |
+| **SHA3-512 (1 KB)** | Digest | 39.7 | 37.0 | 201.0 | 38.0 | 25166.7 |
+| **Seed Generation** | Generate | 37.0 | 35.0 | 374.0 | 36.0 | 27058.5 |
+| **Deterministic Key** | Derive (Kem) | 40.3 | 37.0 | 316.0 | 39.0 | 24829.9 |
+| **Sign-then-Encrypt Pipeline** | EncryptAndSign | 252.5 | 176.0 | 830.0 | 234.0 | 3959.7 |
+| **Sign-then-Encrypt Pipeline** | VerifyAndDecr | 166.5 | 152.0 | 389.0 | 158.0 | 6006.4 |
 
 ---
-
-## 🧪 Testing
-
-The library includes a robust suite of production-grade tests, including correctness verification and security regression tests (tamper checks).
-
-```bash
-# First, ensure your Rust library is compiled for your host machine
-cd rust && cargo build --release
-cd ..
-
-# Run all tests, including KEM, DSA, SLH-DSA, Hybrid, and Benchmarks
-flutter test
-```
-
-### Running Specific Tests
-```bash
-# Run only ML-KEM correctness tests
-flutter test test/ml_kem_test.dart
-
-# Run SLH-DSA (FIPS 205) tests
-flutter test test/slh_dsa_test.dart
-
-# Run hash / XChaCha / HKDF agility tests
-flutter test test/hash_aead_kdf_test.dart
-
-# Run local performance benchmarks
-flutter test test/benchmark_test.dart
-```
-
----
-
 ## 🤝 Contributing
 
 Contributions are welcome! Here’s how to get started:

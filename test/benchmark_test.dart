@@ -151,6 +151,41 @@ Future<void> runDsaBenchmarks(
   });
 }
 
+Future<void> runSlhDsaBenchmarks(
+    BenchmarkRunner runner, SlhDsaAlgorithm algo, String name) async {
+  late PqcKeyPair keyPair;
+  late Uint8List signature;
+  final message = Uint8List.fromList(utf8.encode("Benchmark Test Message"));
+
+  await runner.measure(name, 'KeyGen', () async {
+    keyPair = await QuantumCrypto.slhDsa.generateKeyPair(algo);
+  });
+
+  await runner.measure(name, 'Sign', () async {
+    signature = await QuantumCrypto.slhDsa
+        .sign(algorithm: algo, message: message, secretKey: keyPair.secretKey);
+  });
+
+  await runner.measure(name, 'Verify', () async {
+    await QuantumCrypto.slhDsa.verify(
+        algorithm: algo,
+        message: message,
+        signature: signature,
+        publicKey: keyPair.publicKey);
+  });
+
+  await runner.measure(name, 'Roundtrip', () async {
+    final kp = await QuantumCrypto.slhDsa.generateKeyPair(algo);
+    final sig = await QuantumCrypto.slhDsa
+        .sign(algorithm: algo, message: message, secretKey: kp.secretKey);
+    await QuantumCrypto.slhDsa.verify(
+        algorithm: algo,
+        message: message,
+        signature: sig,
+        publicKey: kp.publicKey);
+  });
+}
+
 Future<void> runHybridKemBenchmarks(
     BenchmarkRunner runner, HybridKemAlgorithm algo, String name) async {
   late HybridKeyPair keyPair;
@@ -272,6 +307,23 @@ Future<void> runDataProcessingBenchmarks(BenchmarkRunner runner) async {
         .derive(sharedSecret: sharedSecret, info: info, outputLength: 32);
   });
 
+  await runner.measure('HKDF-SHA512', 'Derive', () async {
+    await QuantumCrypto.kdf.derive(
+        sharedSecret: sharedSecret,
+        info: info,
+        outputLength: 64,
+        hash: HkdfHash.sha512);
+  });
+
+  final hashInput = _generateRandomBytes(1024); // 1KB
+  await runner.measure('SHA-256 (1 KB)', 'Digest', () async {
+    await QuantumCrypto.hash.digest(HashAlgorithm.sha256, hashInput);
+  });
+
+  await runner.measure('SHA3-512 (1 KB)', 'Digest', () async {
+    await QuantumCrypto.hash.digest(HashAlgorithm.sha3_512, hashInput);
+  });
+
   late Uint8List masterSeed;
   await runner.measure('Seed Generation', 'Generate', () async {
     masterSeed = await QuantumCrypto.seed.generateSeed();
@@ -330,6 +382,14 @@ void main() {
     await runDsaBenchmarks(runner, DsaAlgorithm.mlDsa65, 'ML-DSA-65');
     await runDsaBenchmarks(runner, DsaAlgorithm.mlDsa87, 'ML-DSA-87');
 
+    print('Starting SLH-DSA Benchmarks...');
+    await runSlhDsaBenchmarks(
+        runner, SlhDsaAlgorithm.slhDsaSha2_128f, 'SLH-DSA-SHA2-128f');
+    await runSlhDsaBenchmarks(
+        runner, SlhDsaAlgorithm.slhDsaSha2_192f, 'SLH-DSA-SHA2-192f');
+    await runSlhDsaBenchmarks(
+        runner, SlhDsaAlgorithm.slhDsaSha2_256f, 'SLH-DSA-SHA2-256f');
+
     print('Starting Hybrid KEM Benchmarks...');
     await runHybridKemBenchmarks(
         runner, HybridKemAlgorithm.mlKem512X25519, 'Hybrid ML-KEM-512');
@@ -342,6 +402,8 @@ void main() {
     await runAeadBenchmarks(runner, AeadAlgorithm.aes256Gcm, 'AES-256-GCM');
     await runAeadBenchmarks(
         runner, AeadAlgorithm.chaCha20Poly1305, 'ChaCha20-Poly1305');
+    await runAeadBenchmarks(
+        runner, AeadAlgorithm.xChaCha20Poly1305, 'XChaCha20-Poly1305');
 
     print('Starting Data Processing Benchmarks...');
     await runDataProcessingBenchmarks(runner);
