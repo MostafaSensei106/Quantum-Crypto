@@ -71,9 +71,41 @@ Future<void> main() async {
   log('[DSA] Signature Verification: ${dsaValid ? "✅ VALID" : "❌ INVALID"}\n');
 
   // =========================================================
-  // 3. Hybrid KEM (ML-KEM + X25519)
+  // 3. SLH-DSA (FIPS 205 Stateless Hash-Based Signatures) [NEW in 0.0.2]
   // =========================================================
-  log('--- 3. Hybrid KEM (ML-KEM-768 + X25519) ---');
+  log('--- 3. SLH-DSA (Hash-Based Signatures, FIPS 205) ---');
+  final slhAlgo = SlhDsaAlgorithm.slhDsaSha2_128f; // NIST Security Level 1
+  log('[SLH-DSA] Using Algorithm: ${slhAlgo.name}');
+  log('[SLH-DSA] Note: detached signatures (message NOT embedded).');
+
+  final slhKeyPair = await QuantumCrypto.slhDsa.generateKeyPair(slhAlgo);
+  log(
+    '[SLH-DSA] KeyPair generated. Public Key: ${slhKeyPair.publicKey.length} bytes | Secret Key: ${slhKeyPair.secretKey.length} bytes',
+  );
+
+  final slhSignature = await QuantumCrypto.slhDsa.sign(
+    algorithm: slhAlgo,
+    message: document,
+    secretKey: slhKeyPair.secretKey,
+  );
+  log(
+    '[SLH-DSA] Signed document. Detached signature: ${slhSignature.length} bytes',
+  );
+
+  final slhValid = await QuantumCrypto.slhDsa.verify(
+    algorithm: slhAlgo,
+    message: document,
+    signature: slhSignature,
+    publicKey: slhKeyPair.publicKey,
+  );
+  log(
+    '[SLH-DSA] Signature Verification: ${slhValid ? "✅ VALID" : "❌ INVALID"}\n',
+  );
+
+  // =========================================================
+  // 4. Hybrid KEM (ML-KEM + X25519)
+  // =========================================================
+  log('--- 4. Hybrid KEM (ML-KEM-768 + X25519) ---');
   final hybridAlgo = HybridKemAlgorithm.mlKem768X25519;
   log('[HYBRID] Using Algorithm: ${hybridAlgo.name}');
 
@@ -104,9 +136,9 @@ Future<void> main() async {
   );
 
   // =========================================================
-  // 4. AEAD Symmetric Encryption
+  // 5. AEAD Symmetric Encryption (+ XChaCha20-Poly1305) [NEW in 0.0.2]
   // =========================================================
-  log('--- 4. AEAD Encryption (AES-256-GCM) ---');
+  log('--- 5. AEAD Encryption (AES-256-GCM + XChaCha20-Poly1305) ---');
   final aeadAlgo = AeadAlgorithm.aes256Gcm;
   log('[AEAD] Using Algorithm: ${aeadAlgo.name}');
 
@@ -128,12 +160,35 @@ Future<void> main() async {
 
   final aeadMatch = _bytesEquals(payload, decryptedPayload);
   log('[AEAD] Decrypted text: "${utf8.decode(decryptedPayload)}"');
-  log('[AEAD] Decryption Match: ${aeadMatch ? "✅ SUCCESS" : "❌ FAILED"}\n');
+  log('[AEAD] Decryption Match: ${aeadMatch ? "✅ SUCCESS" : "❌ FAILED"}');
+
+  // XChaCha20-Poly1305: 24-byte random nonce, safe without a counter.
+  // Wire format: 24-byte nonce || ciphertext+tag.
+  final xPayload = Uint8List.fromList(utf8.encode('Extended-nonce secret'));
+  final xCiphertext = await QuantumCrypto.aead.encrypt(
+    algorithm: AeadAlgorithm.xChaCha20Poly1305,
+    key: symmetricKey,
+    plaintext: xPayload,
+  );
+  log(
+    '[AEAD:XChaCha20] Encrypted size: ${xCiphertext.length} bytes '
+    '(24 nonce + ${xPayload.length} plaintext + 16 tag)',
+  );
+
+  final xDecrypted = await QuantumCrypto.aead.decrypt(
+    algorithm: AeadAlgorithm.xChaCha20Poly1305,
+    key: symmetricKey,
+    ciphertextWithNonce: xCiphertext,
+  );
+  final xMatch = _bytesEquals(xPayload, xDecrypted);
+  log(
+    '[AEAD:XChaCha20] Decryption Match: ${xMatch ? "✅ SUCCESS" : "❌ FAILED"}\n',
+  );
 
   // =========================================================
-  // 5. Key Serialization & Utilities
+  // 6. Key Serialization & Utilities
   // =========================================================
-  log('--- 5. Key Serialization Helpers ---');
+  log('--- 6. Key Serialization Helpers ---');
   final hexKey = await QuantumCrypto.keys.bytesToHex(kemKeyPair.publicKey);
   log('[SERIALIZE] Public Key (Hex)    [${hexKey.length} chars]: ...');
 
@@ -141,9 +196,9 @@ Future<void> main() async {
   log('[SERIALIZE] Public Key (Base64) [${b64Key.length} chars]: ...\n');
 
   // =========================================================
-  // 6. Secure Messaging (Sign-then-Encrypt)
+  // 7. Secure Messaging (Sign-then-Encrypt)
   // =========================================================
-  log('--- 6. Secure Messaging ---');
+  log('--- 7. Secure Messaging ---');
   final messageToMostafa = Uint8List.fromList(utf8.encode('Top Secret'));
 
   // We use signAndEncrypt as defined in the library
@@ -176,9 +231,9 @@ Future<void> main() async {
   log('[MESSAGING] Pipeline: ${messagingMatch ? "✅ SUCCESS" : "❌ FAILED"}\n');
 
   // =========================================================
-  // 7. Streaming AEAD Encryption
+  // 8. Streaming AEAD Encryption
   // =========================================================
-  log('--- 7. Streaming AEAD Encryption ---');
+  log('--- 8. Streaming AEAD Encryption ---');
   final largeData = Uint8List.fromList(utf8.encode('Large Data Chunk ' * 100));
 
   final encryptedStream = await QuantumCrypto.streaming.streamEncrypt(
@@ -197,20 +252,59 @@ Future<void> main() async {
   log('[STREAMING] Match: ${streamMatch ? "✅ SUCCESS" : "❌ FAILED"}\n');
 
   // =========================================================
-  // 8. Key Derivation Function (HKDF)
+  // 9. Key Derivation Function (HKDF + Hash Agility) [UPDATED in 0.0.2]
   // =========================================================
-  log('--- 8. Key Derivation Function (HKDF) ---');
+  log('--- 9. Key Derivation Function (HKDF-SHA256/384/512) ---');
   final derivedKey = await QuantumCrypto.kdf.derive(
     sharedSecret: kemEncapsulation.sharedSecret,
     info: Uint8List.fromList(utf8.encode('app_encryption_key')),
     outputLength: 32,
   );
-  log('[KDF] Derived Key length: ${derivedKey.length} bytes\n');
+  log('[KDF] Derived Key (default SHA-256) length: ${derivedKey.length} bytes');
+
+  // Explicit digest selection (NEW in 0.0.2).
+  final derivedKey512 = await QuantumCrypto.kdf.derive(
+    sharedSecret: kemEncapsulation.sharedSecret,
+    info: Uint8List.fromList(utf8.encode('app_encryption_key')),
+    outputLength: 64,
+    hash: HkdfHash.sha512,
+  );
+  log(
+    '[KDF] Derived Key (SHA-512) length: ${derivedKey512.length} bytes',
+  );
+
+  // Derive multiple keys in one call.
+  final multiKeys = await QuantumCrypto.kdf.deriveMulti(
+    sharedSecret: kemEncapsulation.sharedSecret,
+    infoStrings: const ['enc_key', 'mac_key'],
+    keyLength: 32,
+    hash: HkdfHash.sha384,
+  );
+  log('[KDF] deriveMulti (SHA-384) produced ${multiKeys.length} keys\n');
 
   // =========================================================
-  // 9. Deterministic Seed Generation
+  // 10. Cryptographic Hashing (SHA-2 / SHA-3) [NEW in 0.0.2]
   // =========================================================
-  log('--- 9. Deterministic Seed Generation ---');
+  log('--- 10. One-Shot Hashing ---');
+  final hashInput = Uint8List.fromList(utf8.encode('hello'));
+  final sha256Digest = await QuantumCrypto.hash.digest(
+    HashAlgorithm.sha256,
+    hashInput,
+  );
+  final sha3Digest = await QuantumCrypto.hash.digest(
+    HashAlgorithm.sha3_512,
+    hashInput,
+  );
+  log(
+    '[HASH] SHA-256: ${sha256Digest.length} bytes | '
+    'SHA3-512: ${sha3Digest.length} bytes',
+  );
+  log('[HASH] SHA-256("hello") first byte: ${sha256Digest[0]}\n');
+
+  // =========================================================
+  // 11. Deterministic Seed Generation
+  // =========================================================
+  log('--- 11. Deterministic Seed Generation ---');
   final masterSeed = await QuantumCrypto.seed.generateSeed();
   log('[SEED] Master Seed length: ${masterSeed.length} bytes');
 
@@ -230,6 +324,22 @@ Future<void> main() async {
   );
   log('[SEED] Derived AEAD Key length: ${derivedAeadKey.length} bytes\n');
 
+  // =========================================================
+  // 12. SLH-DSA Benchmark [NEW in 0.0.2]
+  // =========================================================
+  log('--- 12. SLH-DSA Benchmark (1 iteration, signing is ~100x ML-DSA) ---');
+  final slhBench = await QuantumCrypto.benchmark.benchmarkSlhDsa(
+    algorithmName: 'SLH-DSA-SHA2-128f',
+    iterations: 1,
+  );
+  for (final r in slhBench) {
+    log('[BENCH] ${r.algorithm} ${r.operation}: '
+        '${r.avgUs} μs avg (${r.opsPerSec.toStringAsFixed(1)} ops/sec)');
+  }
+  log('');
+
+  log('=============================================');
+  log('    ✅ All examples completed successfully ✅    ');
   log('=============================================');
 }
 
