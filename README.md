@@ -10,8 +10,8 @@
 
 
 <p align="center">
-  <a href="https://pub.dev/packages/quantum-crypto"><img src="https://img.shields.io/pub/v/quantum-crypto.svg" alt="pub version"></a>
-  <a href="https://pub.dev/packages/quantum-crypto/score"><img src="https://img.shields.io/pub/points/quantum-crypto.svg" alt="pub points"></a>
+  <a href="https://pub.dev/packages/quantum_crypto"><img src="https://img.shields.io/pub/v/quantum_crypto.svg" alt="pub version"></a>
+  <a href="https://pub.dev/packages/quantum_crypto/score"><img src="https://img.shields.io/pub/points/quantum_crypto.svg" alt="pub points"></a>
   <img src="https://img.shields.io/badge/status-dev%20preview-orange" alt="Status: development preview">
   <img src="https://img.shields.io/badge/platforms-android%20%7C%20ios%20%7C%20linux%20%7C%20macos%20%7C%20windows-blue" alt="Platforms">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
