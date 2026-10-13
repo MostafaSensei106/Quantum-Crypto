@@ -6,13 +6,15 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`, `from`, `from`
 
+/// Generate a hybrid key pair for `algorithm`.
 Future<HybridKeyPairDto> generateHybridKemKeypair(
         {required TargetHybridKemAlgorithm algorithm}) =>
     RustLib.instance.api
         .crateApiHybridKemApiGenerateHybridKemKeypair(algorithm: algorithm);
 
+/// Encapsulate a shared secret to the recipient's hybrid public keys.
 Future<HybridEncapsulationDto> hybridKemEncapsulate(
         {required TargetHybridKemAlgorithm algorithm,
         required List<int> mlkemPublicKey,
@@ -22,6 +24,7 @@ Future<HybridEncapsulationDto> hybridKemEncapsulate(
         mlkemPublicKey: mlkemPublicKey,
         x25519PublicKey: x25519PublicKey);
 
+/// Decapsulate with the recipient's hybrid secret keys.
 Future<Uint8List> hybridKemDecapsulate(
         {required TargetHybridKemAlgorithm algorithm,
         required List<int> mlkemCiphertext,
@@ -35,6 +38,7 @@ Future<Uint8List> hybridKemDecapsulate(
         mlkemSecretKey: mlkemSecretKey,
         x25519SecretKey: x25519SecretKey);
 
+/// FFI-safe hybrid encapsulation output.
 class HybridEncapsulationDto {
   final Uint8List mlkemCiphertext;
   final Uint8List x25519EphemeralPk;
@@ -62,6 +66,7 @@ class HybridEncapsulationDto {
           sharedSecret == other.sharedSecret;
 }
 
+/// FFI-safe hybrid key pair (both components, raw bytes).
 class HybridKeyPairDto {
   final Uint8List mlkemPublicKey;
   final Uint8List x25519PublicKey;
@@ -93,9 +98,15 @@ class HybridKeyPairDto {
           x25519SecretKey == other.x25519SecretKey;
 }
 
+/// Hybrid KEM variant.
 enum TargetHybridKemAlgorithm {
+  /// ML-KEM-512 + X25519 — NIST level 1 + classical.
   mlKem512X25519,
+
+  /// ML-KEM-768 + X25519 — NIST level 3 + classical (recommended default).
   mlKem768X25519,
+
+  /// ML-KEM-1024 + X25519 — NIST level 5 + classical.
   mlKem1024X25519,
   ;
 }

@@ -26,6 +26,8 @@ final
       AeadAlgorithm.aes256Gcm => rust_api.TargetAeadAlgorithm.aes256Gcm,
       AeadAlgorithm.chaCha20Poly1305 =>
         rust_api.TargetAeadAlgorithm.chaCha20Poly1305,
+      AeadAlgorithm.xChaCha20Poly1305 =>
+        rust_api.TargetAeadAlgorithm.xChaCha20Poly1305,
     };
   }
 

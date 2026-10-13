@@ -6,23 +6,29 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+/// Encode bytes as lowercase hex (two chars per byte, no prefix).
 Future<String> bytesToHex({required List<int> data}) =>
     RustLib.instance.api.crateApiKeySerializationApiBytesToHex(data: data);
 
+/// Decode lowercase/uppercase hex (no `0x` prefix) into bytes.
 Future<Uint8List> hexToBytes({required String hex}) =>
     RustLib.instance.api.crateApiKeySerializationApiHexToBytes(hex: hex);
 
+/// Encode bytes as standard Base64 (padded).
 Future<String> bytesToBase64({required List<int> data}) =>
     RustLib.instance.api.crateApiKeySerializationApiBytesToBase64(data: data);
 
+/// Decode standard Base64 into bytes.
 Future<Uint8List> base64ToBytes({required String encoded}) =>
     RustLib.instance.api
         .crateApiKeySerializationApiBase64ToBytes(encoded: encoded);
 
+/// Encode bytes as URL-safe Base64 (padded).
 Future<String> bytesToBase64UrlSafe({required List<int> data}) =>
     RustLib.instance.api
         .crateApiKeySerializationApiBytesToBase64UrlSafe(data: data);
 
+/// Decode URL-safe Base64 into bytes.
 Future<Uint8List> base64UrlSafeToBytes({required String encoded}) =>
     RustLib.instance.api
         .crateApiKeySerializationApiBase64UrlSafeToBytes(encoded: encoded);

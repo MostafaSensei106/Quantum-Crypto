@@ -1,9 +1,11 @@
+pub mod aead;
+pub mod error;
+pub mod hash;
+pub mod hybrid_kem;
 pub mod mldsa;
 pub mod mlkem;
+pub mod seed_keygen;
+pub mod slhdsa;
+pub mod streaming;
 pub mod traits;
 pub mod zeroize;
-pub mod hybrid_kem;
-pub mod aead;
-pub mod streaming;
-pub mod error;
-pub mod seed_keygen;

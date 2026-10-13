@@ -20,4 +20,13 @@ abstract interface class BenchmarkService {
     required String algorithmName,
     int iterations = 10,
   });
+
+  /// Benchmark a specific SLH-DSA parameter set.
+  ///
+  /// Sign iterations are clamped inside the native suite (SLH-DSA signing
+  /// is ~100× slower than ML-DSA by design); prefer small [iterations].
+  Future<List<PqcBenchmarkResult>> benchmarkSlhDsa({
+    required String algorithmName,
+    int iterations = 5,
+  });
 }

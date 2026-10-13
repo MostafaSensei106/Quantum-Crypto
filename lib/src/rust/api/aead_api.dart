@@ -6,8 +6,9 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`
 
+/// Encrypt `plaintext` with a 32-byte `key`; returns `nonce || ciphertext+tag`.
 Future<Uint8List> aeadEncrypt(
         {required TargetAeadAlgorithm algorithm,
         required List<int> key,
@@ -15,6 +16,7 @@ Future<Uint8List> aeadEncrypt(
     RustLib.instance.api.crateApiAeadApiAeadEncrypt(
         algorithm: algorithm, key: key, plaintext: plaintext);
 
+/// Decrypt `ciphertext_with_nonce` (`nonce || ciphertext+tag`) with `key`.
 Future<Uint8List> aeadDecrypt(
         {required TargetAeadAlgorithm algorithm,
         required List<int> key,
@@ -24,8 +26,16 @@ Future<Uint8List> aeadDecrypt(
         key: key,
         ciphertextWithNonce: ciphertextWithNonce);
 
+/// AEAD cipher selection.
 enum TargetAeadAlgorithm {
+  /// AES-256-GCM — fastest where AES hardware acceleration exists.
   aes256Gcm,
+
+  /// ChaCha20-Poly1305 — fastest without AES hardware (mobile/ARM).
   chaCha20Poly1305,
+
+  /// XChaCha20-Poly1305 — 24-byte random nonce; safe without a counter
+  /// and the right default for streaming and multi-sender use.
+  xChaCha20Poly1305,
   ;
 }

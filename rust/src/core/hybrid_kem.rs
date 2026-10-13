@@ -22,6 +22,20 @@ pub struct HybridKeyPairData {
     pub x25519_secret_key: Vec<u8>,
 }
 
+impl HybridKeyPairData {
+    /// Consume the pair, moving all parts out without cloning.
+    /// Secrets are taken (leaving empty buffers that drop cleans up).
+    #[must_use]
+    pub fn into_parts(mut self) -> (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) {
+        (
+            std::mem::take(&mut self.mlkem_public_key),
+            std::mem::take(&mut self.x25519_public_key),
+            std::mem::take(&mut self.mlkem_secret_key),
+            std::mem::take(&mut self.x25519_secret_key),
+        )
+    }
+}
+
 pub struct HybridEncapsulationData {
     pub mlkem_ciphertext: Vec<u8>,
     pub x25519_ephemeral_pk: Vec<u8>,

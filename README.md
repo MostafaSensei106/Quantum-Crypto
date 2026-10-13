@@ -39,7 +39,7 @@ Implementing NTT and matrix arithmetic in pure Dart leads to heavy heap allocati
 | Vector | Legacy Dart Crypto | Pure Dart PQC | **Quantum-Crypto (Rust/FFI)** |
 | :--- | :--- | :--- | :--- |
 | **Mathematical Core** | Prime Factorization / ECC | Lattice-Based | **Lattice-Based (NTT Optimized)** |
-| **Algorithm Standards** | Legacy | Drafts / Unverified | **✅ Implements FIPS 203 / FIPS 204** |
+| **Algorithm Standards** | Legacy | Drafts / Unverified | **✅ Implements FIPS 203 / 204 / 205** |
 | **Memory Allocation** | Dart Heap (Garbage Collected) | Dart Heap (Heavy Thrashing) | **🚀 Native Rust Allocator** |
 | **Thread Isolation** | Blocks Isolate if sync | Blocks Isolate | **⚡ OS-Level Background Threads** |
 | **Forward Secrecy** | Classical (ECDHE) | None | **🛡️ Hybrid (X25519 + ML-KEM)** |
@@ -54,9 +54,11 @@ Implementing NTT and matrix arithmetic in pure Dart leads to heavy heap allocati
 - **Algorithms Supported**:
   - Key Encapsulation (KEM): **ML-KEM-512, ML-KEM-768, ML-KEM-1024**
   - Digital Signatures (DSA): **ML-DSA-44, ML-DSA-65, ML-DSA-87**
+  - Hash-Based Signatures: **SLH-DSA-SHA2-128f, SLH-DSA-SHA2-192f, SLH-DSA-SHA2-256f**
   - Hybrid KEM: **X25519 + ML-KEM**
-  - AEAD Encryption: **AES-256-GCM, ChaCha20Poly1305**
-  - Data Processing: **Streaming Encryption, HKDF, Deterministic Seed Generation**
+  - AEAD Encryption: **AES-256-GCM, ChaCha20Poly1305, XChaCha20Poly1305**
+  - Hashing: **SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-512**
+  - Data Processing: **Streaming Encryption, HKDF (SHA-256/384/512), Deterministic Seed Generation**
 
 ---
 
@@ -173,9 +175,48 @@ Future<void> signDocument() async {
 }
 ```
 
-### 3. AEAD Symmetric Encryption
+### 3. Hash-Based Signatures (SLH-DSA)
 
-Fast, authenticated symmetric encryption (AES-256-GCM / ChaCha20Poly1305).
+Stateless hash-based signatures per FIPS 205. Security rests solely on hash-function
+strength (no lattice assumptions), at the cost of larger signatures and slower signing.
+Signatures are **detached** (message NOT embedded — unlike ML-DSA).
+
+```dart
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:quantum_crypto/quantum_crypto.dart';
+
+Future<void> signHashBased() async {
+  final message = Uint8List.fromList(utf8.encode("Critical Contract"));
+
+  // 1. Generate Key Pair (Level 1; use 192f/256f for Levels 3/5)
+  final keyPair = await QuantumCrypto.slhDsa.generateKeyPair(
+    SlhDsaAlgorithm.slhDsaSha2_128f,
+  );
+
+  // 2. Sign (returns detached signature bytes)
+  final signature = await QuantumCrypto.slhDsa.sign(
+    algorithm: SlhDsaAlgorithm.slhDsaSha2_128f,
+    message: message,
+    secretKey: keyPair.secretKey,
+  );
+
+  // 3. Verify
+  final isValid = await QuantumCrypto.slhDsa.verify(
+    algorithm: SlhDsaAlgorithm.slhDsaSha2_128f,
+    message: message,
+    signature: signature,
+    publicKey: keyPair.publicKey,
+  );
+  print('SLH-DSA signature valid: $isValid');
+}
+```
+
+### 4. AEAD Symmetric Encryption
+
+Fast, authenticated symmetric encryption (AES-256-GCM / ChaCha20Poly1305 /
+XChaCha20Poly1305). Prefer `xChaCha20Poly1305` when you cannot guarantee unique
+12-byte nonces — its 24-byte random nonce is safe without a counter.
 
 ```dart
 import 'package:quantum_crypto/quantum_crypto.dart';
@@ -200,7 +241,7 @@ Future<void> encryptData() async {
 }
 ```
 
-### 4. Key Serialization
+### 5. Key Serialization
 
 Easily convert keys between raw bytes, Hex, and Base64 formats.
 
@@ -216,6 +257,25 @@ Future<void> serializeKeys() async {
 
   // From String
   final restoredKey = await QuantumCrypto.keys.hexToBytes(hexString);
+}
+```
+
+### 6. Cryptographic Hashing
+
+One-shot SHA-2 and SHA-3 digests for key commitment, content addressing, and
+transcript hashing around the PQC primitives.
+
+```dart
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:quantum_crypto/quantum_crypto.dart';
+
+Future<void> hashData() async {
+  final data = Uint8List.fromList(utf8.encode("hello"));
+
+  final sha256 = await QuantumCrypto.hash.digest(HashAlgorithm.sha256, data);
+  final sha3 = await QuantumCrypto.hash.digest(HashAlgorithm.sha3_512, data);
+  print('SHA-256: ${sha256.length} bytes, SHA3-512: ${sha3.length} bytes');
 }
 ```
 
@@ -281,12 +341,21 @@ final decryptedStream = await QuantumCrypto.streaming.streamDecrypt(
 ### Key Derivation Function (HKDF)
 
 Derive strong, cryptographically secure keys from shared secrets.
+Defaults to HKDF-SHA-256; pass `hash:` for SHA-384 / SHA-512.
 
 ```dart
 final derivedKey = await QuantumCrypto.kdf.derive(
   sharedSecret: kemSharedSecret,
   info: Uint8List.fromList(utf8.encode("app_encryption_key")),
   outputLength: 32, // Output 32 bytes (256 bits)
+);
+
+// With explicit digest selection:
+final derivedKey512 = await QuantumCrypto.kdf.derive(
+  sharedSecret: kemSharedSecret,
+  info: Uint8List.fromList(utf8.encode("app_encryption_key")),
+  outputLength: 64,
+  hash: HkdfHash.sha512,
 );
 ```
 
@@ -399,7 +468,7 @@ The library includes a robust suite of production-grade tests, including correct
 cd rust && cargo build --release
 cd ..
 
-# Run all tests, including KEM, DSA, Hybrid, and Benchmarks
+# Run all tests, including KEM, DSA, SLH-DSA, Hybrid, and Benchmarks
 flutter test
 ```
 
@@ -407,6 +476,12 @@ flutter test
 ```bash
 # Run only ML-KEM correctness tests
 flutter test test/ml_kem_test.dart
+
+# Run SLH-DSA (FIPS 205) tests
+flutter test test/slh_dsa_test.dart
+
+# Run hash / XChaCha / HKDF agility tests
+flutter test test/hash_aead_kdf_test.dart
 
 # Run local performance benchmarks
 flutter test test/benchmark_test.dart

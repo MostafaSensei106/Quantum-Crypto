@@ -55,6 +55,8 @@ final
       AeadAlgorithm.aes256Gcm => aead_rust_api.TargetAeadAlgorithm.aes256Gcm,
       AeadAlgorithm.chaCha20Poly1305 =>
         aead_rust_api.TargetAeadAlgorithm.chaCha20Poly1305,
+      AeadAlgorithm.xChaCha20Poly1305 =>
+        aead_rust_api.TargetAeadAlgorithm.xChaCha20Poly1305,
     };
   }
 }

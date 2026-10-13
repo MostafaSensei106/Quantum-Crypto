@@ -9,12 +9,14 @@
 import 'api/aead_api.dart';
 import 'api/benchmark_api.dart';
 import 'api/dsa_api.dart';
+import 'api/hash_api.dart';
 import 'api/hybrid_kem_api.dart';
 import 'api/kdf_api.dart';
 import 'api/kem_api.dart';
 import 'api/key_serialization_api.dart';
 import 'api/secure_messaging_api.dart';
 import 'api/seed_keygen_api.dart';
+import 'api/slh_dsa_api.dart';
 import 'api/streaming_api.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -91,16 +93,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SecurePackageDto dco_decode_secure_package_dto(dynamic raw);
 
   @protected
+  SlhDsaKeyPairDto dco_decode_slh_dsa_key_pair_dto(dynamic raw);
+
+  @protected
   TargetAeadAlgorithm dco_decode_target_aead_algorithm(dynamic raw);
 
   @protected
   TargetDsaAlgorithm dco_decode_target_dsa_algorithm(dynamic raw);
 
   @protected
+  TargetHashAlgorithm dco_decode_target_hash_algorithm(dynamic raw);
+
+  @protected
+  TargetHkdfHash dco_decode_target_hkdf_hash(dynamic raw);
+
+  @protected
   TargetHybridKemAlgorithm dco_decode_target_hybrid_kem_algorithm(dynamic raw);
 
   @protected
   TargetKemAlgorithm dco_decode_target_kem_algorithm(dynamic raw);
+
+  @protected
+  TargetSlhDsaAlgorithm dco_decode_target_slh_dsa_algorithm(dynamic raw);
 
   @protected
   int dco_decode_u_32(dynamic raw);
@@ -180,6 +194,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SecurePackageDto sse_decode_secure_package_dto(SseDeserializer deserializer);
 
   @protected
+  SlhDsaKeyPairDto sse_decode_slh_dsa_key_pair_dto(
+      SseDeserializer deserializer);
+
+  @protected
   TargetAeadAlgorithm sse_decode_target_aead_algorithm(
       SseDeserializer deserializer);
 
@@ -188,11 +206,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  TargetHashAlgorithm sse_decode_target_hash_algorithm(
+      SseDeserializer deserializer);
+
+  @protected
+  TargetHkdfHash sse_decode_target_hkdf_hash(SseDeserializer deserializer);
+
+  @protected
   TargetHybridKemAlgorithm sse_decode_target_hybrid_kem_algorithm(
       SseDeserializer deserializer);
 
   @protected
   TargetKemAlgorithm sse_decode_target_kem_algorithm(
+      SseDeserializer deserializer);
+
+  @protected
+  TargetSlhDsaAlgorithm sse_decode_target_slh_dsa_algorithm(
       SseDeserializer deserializer);
 
   @protected
@@ -279,6 +308,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SecurePackageDto self, SseSerializer serializer);
 
   @protected
+  void sse_encode_slh_dsa_key_pair_dto(
+      SlhDsaKeyPairDto self, SseSerializer serializer);
+
+  @protected
   void sse_encode_target_aead_algorithm(
       TargetAeadAlgorithm self, SseSerializer serializer);
 
@@ -287,12 +320,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       TargetDsaAlgorithm self, SseSerializer serializer);
 
   @protected
+  void sse_encode_target_hash_algorithm(
+      TargetHashAlgorithm self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_target_hkdf_hash(
+      TargetHkdfHash self, SseSerializer serializer);
+
+  @protected
   void sse_encode_target_hybrid_kem_algorithm(
       TargetHybridKemAlgorithm self, SseSerializer serializer);
 
   @protected
   void sse_encode_target_kem_algorithm(
       TargetKemAlgorithm self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_target_slh_dsa_algorithm(
+      TargetSlhDsaAlgorithm self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

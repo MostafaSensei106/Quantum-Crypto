@@ -1,12 +1,24 @@
-use crate::core::hybrid_kem::{HybridKemEngine, HybridKemVariant};
+//! Hybrid KEM (X25519 + ML-KEM) API — FFI boundary.
+//!
+//! Defense in depth: the shared secret is `HKDF-SHA256(ML-KEM-ss || X25519-ss)`,
+//! so the exchange stays safe if *either* component is broken.
 
-#[derive(Clone, Copy)]
+use crate::core::hybrid_kem::{
+    HybridEncapsulationData, HybridKemEngine, HybridKemVariant, HybridKeyPairData,
+};
+
+/// Hybrid KEM variant.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TargetHybridKemAlgorithm {
+    /// ML-KEM-512 + X25519 — NIST level 1 + classical.
     MlKem512X25519,
+    /// ML-KEM-768 + X25519 — NIST level 3 + classical (recommended default).
     MlKem768X25519,
+    /// ML-KEM-1024 + X25519 — NIST level 5 + classical.
     MlKem1024X25519,
 }
 
+/// FFI-safe hybrid key pair (both components, raw bytes).
 pub struct HybridKeyPairDto {
     pub mlkem_public_key: Vec<u8>,
     pub x25519_public_key: Vec<u8>,
@@ -14,6 +26,7 @@ pub struct HybridKeyPairDto {
     pub x25519_secret_key: Vec<u8>,
 }
 
+/// FFI-safe hybrid encapsulation output.
 pub struct HybridEncapsulationDto {
     pub mlkem_ciphertext: Vec<u8>,
     pub x25519_ephemeral_pk: Vec<u8>,
@@ -23,40 +36,63 @@ pub struct HybridEncapsulationDto {
 impl From<TargetHybridKemAlgorithm> for HybridKemVariant {
     fn from(target: TargetHybridKemAlgorithm) -> Self {
         match target {
-            TargetHybridKemAlgorithm::MlKem512X25519 => HybridKemVariant::MlKem512X25519,
-            TargetHybridKemAlgorithm::MlKem768X25519 => HybridKemVariant::MlKem768X25519,
-            TargetHybridKemAlgorithm::MlKem1024X25519 => HybridKemVariant::MlKem1024X25519,
+            TargetHybridKemAlgorithm::MlKem512X25519 => Self::MlKem512X25519,
+            TargetHybridKemAlgorithm::MlKem768X25519 => Self::MlKem768X25519,
+            TargetHybridKemAlgorithm::MlKem1024X25519 => Self::MlKem1024X25519,
         }
     }
 }
 
+impl From<HybridKeyPairData> for HybridKeyPairDto {
+    fn from(data: HybridKeyPairData) -> Self {
+        let (mlkem_public_key, x25519_public_key, mlkem_secret_key, x25519_secret_key) =
+            data.into_parts();
+        Self {
+            mlkem_public_key,
+            x25519_public_key,
+            mlkem_secret_key,
+            x25519_secret_key,
+        }
+    }
+}
+
+impl From<HybridEncapsulationData> for HybridEncapsulationDto {
+    fn from(
+        HybridEncapsulationData {
+            mlkem_ciphertext,
+            x25519_ephemeral_pk,
+            shared_secret,
+        }: HybridEncapsulationData,
+    ) -> Self {
+        Self {
+            mlkem_ciphertext,
+            x25519_ephemeral_pk,
+            shared_secret,
+        }
+    }
+}
+
+/// Generate a hybrid key pair for `algorithm`.
 pub fn generate_hybrid_kem_keypair(
     algorithm: TargetHybridKemAlgorithm,
 ) -> Result<HybridKeyPairDto, String> {
-    let engine = HybridKemEngine::new(algorithm.into());
-    let data = engine.generate_keypair()?;
-    Ok(HybridKeyPairDto {
-        mlkem_public_key: data.mlkem_public_key.clone(),
-        x25519_public_key: data.x25519_public_key.clone(),
-        mlkem_secret_key: data.mlkem_secret_key.clone(),
-        x25519_secret_key: data.x25519_secret_key.clone(),
-    })
+    HybridKemEngine::new(algorithm.into())
+        .generate_keypair()
+        .map(HybridKeyPairDto::from)
 }
 
+/// Encapsulate a shared secret to the recipient's hybrid public keys.
 pub fn hybrid_kem_encapsulate(
     algorithm: TargetHybridKemAlgorithm,
     mlkem_public_key: Vec<u8>,
     x25519_public_key: Vec<u8>,
 ) -> Result<HybridEncapsulationDto, String> {
-    let engine = HybridKemEngine::new(algorithm.into());
-    let data = engine.encapsulate(&mlkem_public_key, &x25519_public_key)?;
-    Ok(HybridEncapsulationDto {
-        mlkem_ciphertext: data.mlkem_ciphertext,
-        x25519_ephemeral_pk: data.x25519_ephemeral_pk,
-        shared_secret: data.shared_secret,
-    })
+    HybridKemEngine::new(algorithm.into())
+        .encapsulate(&mlkem_public_key, &x25519_public_key)
+        .map(HybridEncapsulationDto::from)
 }
 
+/// Decapsulate with the recipient's hybrid secret keys.
 pub fn hybrid_kem_decapsulate(
     algorithm: TargetHybridKemAlgorithm,
     mlkem_ciphertext: Vec<u8>,
@@ -64,8 +100,7 @@ pub fn hybrid_kem_decapsulate(
     mlkem_secret_key: Vec<u8>,
     x25519_secret_key: Vec<u8>,
 ) -> Result<Vec<u8>, String> {
-    let engine = HybridKemEngine::new(algorithm.into());
-    engine.decapsulate(
+    HybridKemEngine::new(algorithm.into()).decapsulate(
         &mlkem_ciphertext,
         &x25519_ephemeral_pk,
         &mlkem_secret_key,

@@ -9,6 +9,11 @@ import 'dsa_api.dart';
 import 'hybrid_kem_api.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+// These functions are ignored because they are not marked as `pub`: `decapsulate_with`, `decode_signed_payload`, `encapsulate_to`, `encode_signed_payload`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `EncapsulationParts`
+
+/// Sign `message`, then encrypt (`message || signature`) to the recipient's
+/// hybrid KEM public keys.
 Future<SecurePackageDto> signThenEncrypt(
         {required TargetDsaAlgorithm dsaAlgorithm,
         required TargetHybridKemAlgorithm kemAlgorithm,
@@ -47,6 +52,8 @@ Future<Uint8List> decryptThenVerify(
         recipientX25519SecretKey: recipientX25519SecretKey,
         senderDsaPublicKey: senderDsaPublicKey);
 
+/// Encrypt `message` to the recipient, then sign the ciphertext so anyone
+/// can verify authenticity before decryption.
 Future<EncryptThenSignPackageDto> encryptThenSign(
         {required TargetDsaAlgorithm dsaAlgorithm,
         required TargetHybridKemAlgorithm kemAlgorithm,
@@ -87,6 +94,7 @@ Future<Uint8List> verifyThenDecrypt(
         recipientX25519SecretKey: recipientX25519SecretKey,
         senderDsaPublicKey: senderDsaPublicKey);
 
+/// Encrypted package produced by [`encrypt_then_sign`].
 class EncryptThenSignPackageDto {
   final Uint8List mlkemCiphertext;
   final Uint8List x25519EphemeralPk;
@@ -130,6 +138,7 @@ class EncryptThenSignPackageDto {
           aeadAlgorithm == other.aeadAlgorithm;
 }
 
+/// Encrypted package produced by [`sign_then_encrypt`].
 class SecurePackageDto {
   final Uint8List mlkemCiphertext;
   final Uint8List x25519EphemeralPk;

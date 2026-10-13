@@ -1,6 +1,6 @@
 name: quantum_crypto
 description: "An advanced, Post-Quantum Cryptography suite for Flutter, powered by Rust."
-version: 0.0.1
+version: 0.0.2
 
 repository: https://github.com/MostafaSensei106/Quantum-Crypto
 license: GPL-version 3.0

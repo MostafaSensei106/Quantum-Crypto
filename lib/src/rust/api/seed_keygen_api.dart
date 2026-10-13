@@ -10,12 +10,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 Future<Uint8List> generateMasterSeed() =>
     RustLib.instance.api.crateApiSeedKeygenApiGenerateMasterSeed();
 
-/// Derive key material from a master seed using HKDF-SHA256.
-///
-/// * `seed` - Master seed (>= 32 bytes)
-/// * `purpose` - Domain separation string (e.g., "x25519-private-key")
-/// * `key_index` - Index for deriving multiple keys of the same purpose
-/// * `output_len` - Desired output length in bytes (1-8160)
+/// Derive `output_len` bytes for (`purpose`, `key_index`) from `seed`.
 Future<Uint8List> deriveKeyFromSeed(
         {required List<int> seed,
         required String purpose,
@@ -24,13 +19,13 @@ Future<Uint8List> deriveKeyFromSeed(
     RustLib.instance.api.crateApiSeedKeygenApiDeriveKeyFromSeed(
         seed: seed, purpose: purpose, keyIndex: keyIndex, outputLen: outputLen);
 
-/// Derive a 32-byte X25519 private key deterministically from seed.
+/// Derive a 32-byte X25519 private key from (`seed`, `key_index`).
 Future<Uint8List> deriveX25519FromSeed(
         {required List<int> seed, required int keyIndex}) =>
     RustLib.instance.api.crateApiSeedKeygenApiDeriveX25519FromSeed(
         seed: seed, keyIndex: keyIndex);
 
-/// Derive a 32-byte AEAD symmetric key deterministically from seed.
+/// Derive a 32-byte AEAD symmetric key from (`seed`, `key_index`).
 Future<Uint8List> deriveAeadKeyFromSeed(
         {required List<int> seed, required int keyIndex}) =>
     RustLib.instance.api.crateApiSeedKeygenApiDeriveAeadKeyFromSeed(

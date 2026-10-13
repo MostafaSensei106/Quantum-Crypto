@@ -6,12 +6,14 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`, `from`
 
+/// Generate an ML-DSA key pair for `algorithm`.
 Future<DsaKeyPairDto> generateDsaKeypair(
         {required TargetDsaAlgorithm algorithm}) =>
     RustLib.instance.api.crateApiDsaApiGenerateDsaKeypair(algorithm: algorithm);
 
+/// Sign `message` with `secret_key`; returns attached signature bytes.
 Future<Uint8List> dsaSign(
         {required TargetDsaAlgorithm algorithm,
         required List<int> message,
@@ -19,6 +21,8 @@ Future<Uint8List> dsaSign(
     RustLib.instance.api.crateApiDsaApiDsaSign(
         algorithm: algorithm, message: message, secretKey: secretKey);
 
+/// Verify an attached `signature` over `message` with `public_key`.
+/// Returns `Ok(false)` — not an error — when the signature is invalid.
 Future<bool> dsaVerify(
         {required TargetDsaAlgorithm algorithm,
         required List<int> message,
@@ -30,6 +34,7 @@ Future<bool> dsaVerify(
         signature: signature,
         publicKey: publicKey);
 
+/// FFI-safe signature key pair: raw public bytes + raw secret bytes.
 class DsaKeyPairDto {
   final Uint8List publicKey;
   final Uint8List secretKey;
@@ -51,9 +56,15 @@ class DsaKeyPairDto {
           secretKey == other.secretKey;
 }
 
+/// ML-DSA parameter set (FIPS 204).
 enum TargetDsaAlgorithm {
+  /// ML-DSA-44 — NIST security level 2.
   mlDsa44,
+
+  /// ML-DSA-65 — NIST security level 3 (recommended default).
   mlDsa65,
+
+  /// ML-DSA-87 — NIST security level 5.
   mlDsa87,
   ;
 }

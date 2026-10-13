@@ -7,14 +7,9 @@ import '../frb_generated.dart';
 import 'aead_api.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-/// Encrypt data using streaming/chunked AEAD encryption.
-/// Suitable for large files. Data is split into chunks and each chunk
-/// is encrypted independently with a counter-based nonce.
+/// Encrypt `plaintext` in chunks.
 ///
-/// * `algorithm` - AEAD algorithm to use
-/// * `key` - 32-byte encryption key
-/// * `plaintext` - Data to encrypt
-/// * `chunk_size` - Optional chunk size in bytes (default: 65536 = 64KB)
+/// * `chunk_size` — chunk size in bytes; defaults to 64 KiB when `None`.
 Future<Uint8List> streamAeadEncrypt(
         {required TargetAeadAlgorithm algorithm,
         required List<int> key,
@@ -26,10 +21,7 @@ Future<Uint8List> streamAeadEncrypt(
         plaintext: plaintext,
         chunkSize: chunkSize);
 
-/// Decrypt data that was encrypted with streaming/chunked AEAD encryption.
-///
-/// * `key` - 32-byte decryption key
-/// * `encrypted_data` - The full encrypted stream (header + chunks)
+/// Decrypt a stream produced by [`stream_aead_encrypt`].
 Future<Uint8List> streamAeadDecrypt(
         {required List<int> key, required List<int> encryptedData}) =>
     RustLib.instance.api.crateApiStreamingApiStreamAeadDecrypt(

@@ -10,11 +10,13 @@ crate-type = ["cdylib", "staticlib"]
 flutter_rust_bridge = "=2.13.0"
 pqcrypto-mldsa = "0.1.2"
 pqcrypto-mlkem = "0.1.1"
+pqcrypto-sphincsplus = "0.7"
 pqcrypto-traits = "0.3.5"
 zeroize = { version = "1.9.0", features = ["zeroize_derive"] }
 x25519-dalek = { version = "2.0", features = ["static_secrets"] }
 hkdf = "0.12"
 sha2 = "0.10"
+sha3 = "0.10"
 rand_core = { version = "0.6", features = ["getrandom"] }
 aes-gcm = "0.10"
 chacha20poly1305 = "0.10"

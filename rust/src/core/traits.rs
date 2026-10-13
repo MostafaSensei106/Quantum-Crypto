@@ -5,9 +5,27 @@ pub struct SecretKeyContainer {
     pub bytes: Vec<u8>,
 }
 
+impl SecretKeyContainer {
+    /// Consume the container, moving the key bytes out without cloning.
+    /// The (now empty) container is still zeroized on drop.
+    #[must_use]
+    pub fn into_bytes(mut self) -> Vec<u8> {
+        std::mem::take(&mut self.bytes)
+    }
+}
+
 #[derive(ZeroizeOnDrop)]
 pub struct DsaSecretKeyContainer {
     pub bytes: Vec<u8>,
+}
+
+impl DsaSecretKeyContainer {
+    /// Consume the container, moving the key bytes out without cloning.
+    /// The (now empty) container is still zeroized on drop.
+    #[must_use]
+    pub fn into_bytes(mut self) -> Vec<u8> {
+        std::mem::take(&mut self.bytes)
+    }
 }
 
 pub struct DsaKeyPair {

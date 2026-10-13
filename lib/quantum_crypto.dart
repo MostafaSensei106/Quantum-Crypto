@@ -3,14 +3,19 @@ library;
 // Core Enums
 export 'src/core/enums/kem_algorithm.dart';
 export 'src/core/enums/dsa_algorithm.dart';
+export 'src/core/enums/slh_dsa_algorithm.dart';
 export 'src/core/enums/hybrid_kem_algorithm.dart';
 export 'src/core/enums/aead_algorithm.dart';
+export 'src/core/enums/hash_algorithm.dart';
+export 'src/core/enums/hkdf_hash.dart';
 
 // Core Interfaces
 export 'src/core/interfaces/kem_service.dart';
 export 'src/core/interfaces/dsa_service.dart';
+export 'src/core/interfaces/slh_dsa_service.dart';
 export 'src/core/interfaces/hybrid_kem_service.dart';
 export 'src/core/interfaces/aead_service.dart';
+export 'src/core/interfaces/hash_service.dart';
 export 'src/core/interfaces/key_serialization_service.dart';
 export 'src/core/interfaces/secure_messaging_service.dart';
 export 'src/core/interfaces/streaming_service.dart';

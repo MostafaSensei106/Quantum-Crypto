@@ -1,11 +1,15 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:quantum_crypto/src/core/interfaces/aead_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/dsa_service.dart';
+import 'package:quantum_crypto/src/core/interfaces/hash_service.dart';
+import 'package:quantum_crypto/src/core/interfaces/slh_dsa_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/hybrid_kem_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/kem_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/key_serialization_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/secure_messaging_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/aead_service_impl.dart';
+import 'package:quantum_crypto/src/infrastructure/services/hash_service_impl.dart';
+import 'package:quantum_crypto/src/infrastructure/services/slh_dsa_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/hybrid_kem_service_impl.dart';
 import 'package:quantum_crypto/src/infrastructure/services/key_serialization_service_impl.dart';
 import 'package:quantum_crypto/src/infrastructure/services/ml_dsa_service.dart';
@@ -26,8 +30,10 @@ import 'package:quantum_crypto/src/rust/frb_generated.dart';
 /// Provides both high-level and low-level access to:
 /// - ML-KEM (Key Encapsulation)
 /// - ML-DSA (Digital Signatures)
+/// - SLH-DSA (Stateless Hash-Based Signatures)
 /// - Hybrid KEM (ML-KEM + X25519)
-/// - AEAD Encryption (AES-256-GCM / ChaCha20-Poly1305)
+/// - AEAD Encryption (AES-256-GCM / ChaCha20-Poly1305 / XChaCha20-Poly1305)
+/// - Hashing (SHA-2 / SHA-3)
 /// - Key Serialization (Hex, Base64)
 /// - Secure Messaging (Sign-then-Encrypt)
 abstract final class QuantumCrypto {
@@ -72,6 +78,12 @@ abstract final class QuantumCrypto {
 
   /// ML-DSA Digital Signature Algorithm service.
   static const DsaService dsa = MlDsaService();
+
+  /// SLH-DSA (FIPS 205) stateless hash-based signature service.
+  static const SlhDsaService slhDsa = SlhDsaServiceImpl();
+
+  /// One-shot hash (SHA-2 / SHA-3) service.
+  static const HashService hash = HashServiceImpl();
 
   /// Hybrid KEM (ML-KEM + X25519) service.
   static const HybridKemService hybrid = HybridKemServiceImpl();

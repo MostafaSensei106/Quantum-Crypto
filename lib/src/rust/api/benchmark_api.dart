@@ -6,13 +6,15 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `aead_variant_from_name`, `bench`, `dsa_algorithm_from_name`, `get_platform_info`, `hybrid_variant_from_name`, `kem_algorithm_from_name`
+// These functions are ignored because they are not marked as `pub`: `bench`, `benchmark_aead_set`, `benchmark_dsa_set`, `benchmark_hash_set`, `benchmark_hybrid_set`, `benchmark_kem_set`, `benchmark_slh_dsa_set`, `dsa_strategy`, `get_platform_info`, `human_size`, `kem_strategy`, `resolve_aead`, `resolve_dsa`, `resolve_hash`, `resolve_hybrid`, `resolve_kem`, `resolve_slh_dsa`
 
-/// Run the full benchmark suite covering KEM, DSA, Hybrid KEM, and AEAD operations.
+/// Run the full benchmark suite covering KEM, DSA, SLH-DSA, hybrid KEM,
+/// AEAD, and hashing.
 ///
-/// * `kem_iterations` - Number of iterations for KEM benchmarks
-/// * `dsa_iterations` - Number of iterations for DSA benchmarks
-/// * `aead_iterations` - Number of iterations for AEAD benchmarks
+/// * `kem_iterations` — iterations for KEM / hybrid / hash benchmarks
+/// * `dsa_iterations` — iterations for DSA benchmarks (SLH-DSA signing is
+///   clamped internally, see [`benchmark_slh_dsa_set`])
+/// * `aead_iterations` — iterations for AEAD benchmarks
 Future<BenchmarkSuiteResult> runBenchmarkSuite(
         {required int kemIterations,
         required int dsaIterations,
@@ -28,10 +30,17 @@ Future<List<BenchmarkResult>> benchmarkKemByName(
     RustLib.instance.api.crateApiBenchmarkApiBenchmarkKemByName(
         algorithmName: algorithmName, iterations: iterations);
 
-/// Run a quick benchmark for a single DSA algorithm variant.
+/// Run a quick benchmark for a single ML-DSA algorithm variant.
 Future<List<BenchmarkResult>> benchmarkDsaByName(
         {required String algorithmName, required int iterations}) =>
     RustLib.instance.api.crateApiBenchmarkApiBenchmarkDsaByName(
+        algorithmName: algorithmName, iterations: iterations);
+
+/// Run a quick benchmark for a single SLH-DSA parameter set
+/// (signing iterations are clamped, see [`benchmark_slh_dsa_set`]).
+Future<List<BenchmarkResult>> benchmarkSlhDsaByName(
+        {required String algorithmName, required int iterations}) =>
+    RustLib.instance.api.crateApiBenchmarkApiBenchmarkSlhDsaByName(
         algorithmName: algorithmName, iterations: iterations);
 
 /// Result of a single benchmark operation.
@@ -42,7 +51,7 @@ class BenchmarkResult {
   /// Algorithm or variant used.
   final String algorithm;
 
-  /// Number of iterations performed.
+  /// Number of iterations actually performed.
   final int iterations;
 
   /// Total time in microseconds.

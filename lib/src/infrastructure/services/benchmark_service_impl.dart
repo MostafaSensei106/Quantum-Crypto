@@ -88,4 +88,25 @@ final
             ))
         .toList();
   }
+
+  @override
+  Future<List<PqcBenchmarkResult>> benchmarkSlhDsa({
+    required String algorithmName,
+    int iterations = 5,
+  }) async {
+    final results = await rust_api.benchmarkSlhDsaByName(
+      algorithmName: algorithmName,
+      iterations: iterations,
+    );
+    return results
+        .map((r) => PqcBenchmarkResult(
+              operation: r.operation,
+              algorithm: r.algorithm,
+              iterations: r.iterations,
+              totalUs: r.totalUs.toInt(),
+              avgUs: r.avgUs.toInt(),
+              opsPerSec: r.opsPerSec,
+            ))
+        .toList();
+  }
 }

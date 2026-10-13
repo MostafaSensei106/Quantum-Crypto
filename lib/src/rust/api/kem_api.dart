@@ -6,18 +6,21 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`, `from`, `from`
 
+/// Generate an ML-KEM key pair for `algorithm`.
 Future<KeyPairDto> generateKemKeypair(
         {required TargetKemAlgorithm algorithm}) =>
     RustLib.instance.api.crateApiKemApiGenerateKemKeypair(algorithm: algorithm);
 
+/// Encapsulate a fresh shared secret to `public_key`.
 Future<EncapsulationDto> kemEncapsulate(
         {required TargetKemAlgorithm algorithm,
         required List<int> publicKey}) =>
     RustLib.instance.api.crateApiKemApiKemEncapsulate(
         algorithm: algorithm, publicKey: publicKey);
 
+/// Decapsulate `ciphertext` with `secret_key`, recovering the shared secret.
 Future<Uint8List> kemDecapsulate(
         {required TargetKemAlgorithm algorithm,
         required List<int> ciphertext,
@@ -25,6 +28,7 @@ Future<Uint8List> kemDecapsulate(
     RustLib.instance.api.crateApiKemApiKemDecapsulate(
         algorithm: algorithm, ciphertext: ciphertext, secretKey: secretKey);
 
+/// FFI-safe encapsulation output.
 class EncapsulationDto {
   final Uint8List ciphertext;
   final Uint8List sharedSecret;
@@ -46,6 +50,7 @@ class EncapsulationDto {
           sharedSecret == other.sharedSecret;
 }
 
+/// FFI-safe key pair: raw public bytes + raw secret bytes.
 class KeyPairDto {
   final Uint8List publicKey;
   final Uint8List secretKey;
@@ -67,9 +72,15 @@ class KeyPairDto {
           secretKey == other.secretKey;
 }
 
+/// ML-KEM parameter set (FIPS 203).
 enum TargetKemAlgorithm {
+  /// ML-KEM-512 — NIST security level 1.
   mlKem512,
+
+  /// ML-KEM-768 — NIST security level 3 (recommended default).
   mlKem768,
+
+  /// ML-KEM-1024 — NIST security level 5.
   mlKem1024,
   ;
 }

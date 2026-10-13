@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 885833109;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1145257052;
 
 // Section: executor
 
@@ -257,6 +257,43 @@ fn wire__crate__api__benchmark_api__benchmark_kem_by_name_impl(
             move |context| {
                 transform_result_sse::<_, String>((move || {
                     let output_ok = crate::api::benchmark_api::benchmark_kem_by_name(
+                        api_algorithm_name,
+                        api_iterations,
+                    )?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__benchmark_api__benchmark_slh_dsa_by_name_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "benchmark_slh_dsa_by_name",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_algorithm_name = <String>::sse_decode(&mut deserializer);
+            let api_iterations = <u32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::benchmark_api::benchmark_slh_dsa_by_name(
                         api_algorithm_name,
                         api_iterations,
                     )?;
@@ -808,6 +845,77 @@ fn wire__crate__api__seed_keygen_api__generate_master_seed_impl(
         },
     )
 }
+fn wire__crate__api__slh_dsa_api__generate_slh_dsa_keypair_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "generate_slh_dsa_keypair",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_algorithm =
+                <crate::api::slh_dsa_api::TargetSlhDsaAlgorithm>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok =
+                        crate::api::slh_dsa_api::generate_slh_dsa_keypair(api_algorithm)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__hash_api__hash_data_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "hash_data",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_algorithm =
+                <crate::api::hash_api::TargetHashAlgorithm>::sse_decode(&mut deserializer);
+            let api_data = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok =
+                        Ok::<_, ()>(crate::api::hash_api::hash_data(api_algorithm, api_data))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__key_serialization_api__hex_to_bytes_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -916,6 +1024,92 @@ fn wire__crate__api__kdf_api__hkdf_derive_multi_impl(
                         api_salt,
                         api_info_strings,
                         api_key_length,
+                    )?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__kdf_api__hkdf_derive_multi_with_hash_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "hkdf_derive_multi_with_hash",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_shared_secret = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_salt = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_info_strings = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_key_length = <u32>::sse_decode(&mut deserializer);
+            let api_hash = <crate::api::kdf_api::TargetHkdfHash>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::kdf_api::hkdf_derive_multi_with_hash(
+                        api_shared_secret,
+                        api_salt,
+                        api_info_strings,
+                        api_key_length,
+                        api_hash,
+                    )?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__kdf_api__hkdf_derive_with_hash_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "hkdf_derive_with_hash",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_shared_secret = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_salt = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_info = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_output_len = <u32>::sse_decode(&mut deserializer);
+            let api_hash = <crate::api::kdf_api::TargetHkdfHash>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::kdf_api::hkdf_derive_with_hash(
+                        api_shared_secret,
+                        api_salt,
+                        api_info,
+                        api_output_len,
+                        api_hash,
                     )?;
                     std::result::Result::Ok(output_ok)
                 })())
@@ -1169,6 +1363,88 @@ fn wire__crate__api__secure_messaging_api__sign_then_encrypt_impl(
                         api_sender_dsa_secret_key,
                         api_recipient_mlkem_public_key,
                         api_recipient_x25519_public_key,
+                    )?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__slh_dsa_api__slh_dsa_sign_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "slh_dsa_sign",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_algorithm =
+                <crate::api::slh_dsa_api::TargetSlhDsaAlgorithm>::sse_decode(&mut deserializer);
+            let api_message = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_secret_key = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::slh_dsa_api::slh_dsa_sign(
+                        api_algorithm,
+                        api_message,
+                        api_secret_key,
+                    )?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__slh_dsa_api__slh_dsa_verify_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "slh_dsa_verify",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_algorithm =
+                <crate::api::slh_dsa_api::TargetSlhDsaAlgorithm>::sse_decode(&mut deserializer);
+            let api_message = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_signature = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_public_key = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::slh_dsa_api::slh_dsa_verify(
+                        api_algorithm,
+                        api_message,
+                        api_signature,
+                        api_public_key,
                     )?;
                     std::result::Result::Ok(output_ok)
                 })())
@@ -1555,6 +1831,18 @@ impl SseDecode for crate::api::secure_messaging_api::SecurePackageDto {
     }
 }
 
+impl SseDecode for crate::api::slh_dsa_api::SlhDsaKeyPairDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_publicKey = <Vec<u8>>::sse_decode(deserializer);
+        let mut var_secretKey = <Vec<u8>>::sse_decode(deserializer);
+        return crate::api::slh_dsa_api::SlhDsaKeyPairDto {
+            public_key: var_publicKey,
+            secret_key: var_secretKey,
+        };
+    }
+}
+
 impl SseDecode for crate::api::aead_api::TargetAeadAlgorithm {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1562,6 +1850,7 @@ impl SseDecode for crate::api::aead_api::TargetAeadAlgorithm {
         return match inner {
             0 => crate::api::aead_api::TargetAeadAlgorithm::Aes256Gcm,
             1 => crate::api::aead_api::TargetAeadAlgorithm::ChaCha20Poly1305,
+            2 => crate::api::aead_api::TargetAeadAlgorithm::XChaCha20Poly1305,
             _ => unreachable!("Invalid variant for TargetAeadAlgorithm: {}", inner),
         };
     }
@@ -1576,6 +1865,34 @@ impl SseDecode for crate::api::dsa_api::TargetDsaAlgorithm {
             1 => crate::api::dsa_api::TargetDsaAlgorithm::MlDsa65,
             2 => crate::api::dsa_api::TargetDsaAlgorithm::MlDsa87,
             _ => unreachable!("Invalid variant for TargetDsaAlgorithm: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::hash_api::TargetHashAlgorithm {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::hash_api::TargetHashAlgorithm::Sha256,
+            1 => crate::api::hash_api::TargetHashAlgorithm::Sha384,
+            2 => crate::api::hash_api::TargetHashAlgorithm::Sha512,
+            3 => crate::api::hash_api::TargetHashAlgorithm::Sha3_256,
+            4 => crate::api::hash_api::TargetHashAlgorithm::Sha3_512,
+            _ => unreachable!("Invalid variant for TargetHashAlgorithm: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::kdf_api::TargetHkdfHash {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::kdf_api::TargetHkdfHash::Sha256,
+            1 => crate::api::kdf_api::TargetHkdfHash::Sha384,
+            2 => crate::api::kdf_api::TargetHkdfHash::Sha512,
+            _ => unreachable!("Invalid variant for TargetHkdfHash: {}", inner),
         };
     }
 }
@@ -1602,6 +1919,19 @@ impl SseDecode for crate::api::kem_api::TargetKemAlgorithm {
             1 => crate::api::kem_api::TargetKemAlgorithm::MlKem768,
             2 => crate::api::kem_api::TargetKemAlgorithm::MlKem1024,
             _ => unreachable!("Invalid variant for TargetKemAlgorithm: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::slh_dsa_api::TargetSlhDsaAlgorithm {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::slh_dsa_api::TargetSlhDsaAlgorithm::SlhDsaSha2_128f,
+            1 => crate::api::slh_dsa_api::TargetSlhDsaAlgorithm::SlhDsaSha2_192f,
+            2 => crate::api::slh_dsa_api::TargetSlhDsaAlgorithm::SlhDsaSha2_256f,
+            _ => unreachable!("Invalid variant for TargetSlhDsaAlgorithm: {}", inner),
         };
     }
 }
@@ -1667,121 +1997,145 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        7 => wire__crate__api__key_serialization_api__bytes_to_base64_impl(
+        7 => wire__crate__api__benchmark_api__benchmark_slh_dsa_by_name_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        8 => wire__crate__api__key_serialization_api__bytes_to_base64_url_safe_impl(
+        8 => wire__crate__api__key_serialization_api__bytes_to_base64_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        9 => wire__crate__api__key_serialization_api__bytes_to_hex_impl(
+        9 => wire__crate__api__key_serialization_api__bytes_to_base64_url_safe_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        10 => wire__crate__api__secure_messaging_api__decrypt_then_verify_impl(
+        10 => wire__crate__api__key_serialization_api__bytes_to_hex_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        11 => wire__crate__api__seed_keygen_api__derive_aead_key_from_seed_impl(
+        11 => wire__crate__api__secure_messaging_api__decrypt_then_verify_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        12 => wire__crate__api__seed_keygen_api__derive_key_from_seed_impl(
+        12 => wire__crate__api__seed_keygen_api__derive_aead_key_from_seed_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        13 => wire__crate__api__seed_keygen_api__derive_x25519_from_seed_impl(
+        13 => wire__crate__api__seed_keygen_api__derive_key_from_seed_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        14 => wire__crate__api__dsa_api__dsa_sign_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__dsa_api__dsa_verify_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__secure_messaging_api__encrypt_then_sign_impl(
+        14 => wire__crate__api__seed_keygen_api__derive_x25519_from_seed_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        17 => {
+        15 => wire__crate__api__dsa_api__dsa_sign_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__dsa_api__dsa_verify_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__secure_messaging_api__encrypt_then_sign_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        18 => {
             wire__crate__api__dsa_api__generate_dsa_keypair_impl(port, ptr, rust_vec_len, data_len)
         }
-        18 => wire__crate__api__hybrid_kem_api__generate_hybrid_kem_keypair_impl(
+        19 => wire__crate__api__hybrid_kem_api__generate_hybrid_kem_keypair_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        19 => {
+        20 => {
             wire__crate__api__kem_api__generate_kem_keypair_impl(port, ptr, rust_vec_len, data_len)
         }
-        20 => wire__crate__api__seed_keygen_api__generate_master_seed_impl(
+        21 => wire__crate__api__seed_keygen_api__generate_master_seed_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        21 => wire__crate__api__key_serialization_api__hex_to_bytes_impl(
+        22 => wire__crate__api__slh_dsa_api__generate_slh_dsa_keypair_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        22 => wire__crate__api__kdf_api__hkdf_derive_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__kdf_api__hkdf_derive_multi_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__hybrid_kem_api__hybrid_kem_decapsulate_impl(
+        23 => wire__crate__api__hash_api__hash_data_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__key_serialization_api__hex_to_bytes_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        25 => wire__crate__api__hybrid_kem_api__hybrid_kem_encapsulate_impl(
+        25 => wire__crate__api__kdf_api__hkdf_derive_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__kdf_api__hkdf_derive_multi_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__kdf_api__hkdf_derive_multi_with_hash_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        26 => wire__crate__api__kem_api__kem_decapsulate_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__kem_api__kem_encapsulate_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__benchmark_api__run_benchmark_suite_impl(
+        28 => {
+            wire__crate__api__kdf_api__hkdf_derive_with_hash_impl(port, ptr, rust_vec_len, data_len)
+        }
+        29 => wire__crate__api__hybrid_kem_api__hybrid_kem_decapsulate_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        29 => wire__crate__api__secure_messaging_api__sign_then_encrypt_impl(
+        30 => wire__crate__api__hybrid_kem_api__hybrid_kem_encapsulate_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        30 => wire__crate__api__streaming_api__stream_aead_decrypt_impl(
+        31 => wire__crate__api__kem_api__kem_decapsulate_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__kem_api__kem_encapsulate_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__benchmark_api__run_benchmark_suite_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        31 => wire__crate__api__streaming_api__stream_aead_encrypt_impl(
+        34 => wire__crate__api__secure_messaging_api__sign_then_encrypt_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        32 => wire__crate__api__secure_messaging_api__verify_then_decrypt_impl(
+        35 => wire__crate__api__slh_dsa_api__slh_dsa_sign_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__slh_dsa_api__slh_dsa_verify_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__streaming_api__stream_aead_decrypt_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        38 => wire__crate__api__streaming_api__stream_aead_encrypt_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        39 => wire__crate__api__secure_messaging_api__verify_then_decrypt_impl(
             port,
             ptr,
             rust_vec_len,
@@ -2012,11 +2366,33 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::secure_messaging_api::SecureP
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::slh_dsa_api::SlhDsaKeyPairDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.public_key.into_into_dart().into_dart(),
+            self.secret_key.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::slh_dsa_api::SlhDsaKeyPairDto
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::slh_dsa_api::SlhDsaKeyPairDto>
+    for crate::api::slh_dsa_api::SlhDsaKeyPairDto
+{
+    fn into_into_dart(self) -> crate::api::slh_dsa_api::SlhDsaKeyPairDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::aead_api::TargetAeadAlgorithm {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self {
             Self::Aes256Gcm => 0.into_dart(),
             Self::ChaCha20Poly1305 => 1.into_dart(),
+            Self::XChaCha20Poly1305 => 2.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -2051,6 +2427,52 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::dsa_api::TargetDsaAlgorithm>
     for crate::api::dsa_api::TargetDsaAlgorithm
 {
     fn into_into_dart(self) -> crate::api::dsa_api::TargetDsaAlgorithm {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::hash_api::TargetHashAlgorithm {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Sha256 => 0.into_dart(),
+            Self::Sha384 => 1.into_dart(),
+            Self::Sha512 => 2.into_dart(),
+            Self::Sha3_256 => 3.into_dart(),
+            Self::Sha3_512 => 4.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::hash_api::TargetHashAlgorithm
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::hash_api::TargetHashAlgorithm>
+    for crate::api::hash_api::TargetHashAlgorithm
+{
+    fn into_into_dart(self) -> crate::api::hash_api::TargetHashAlgorithm {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::kdf_api::TargetHkdfHash {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Sha256 => 0.into_dart(),
+            Self::Sha384 => 1.into_dart(),
+            Self::Sha512 => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::kdf_api::TargetHkdfHash
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::kdf_api::TargetHkdfHash>
+    for crate::api::kdf_api::TargetHkdfHash
+{
+    fn into_into_dart(self) -> crate::api::kdf_api::TargetHkdfHash {
         self
     }
 }
@@ -2095,6 +2517,28 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::kem_api::TargetKemAlgorithm>
     for crate::api::kem_api::TargetKemAlgorithm
 {
     fn into_into_dart(self) -> crate::api::kem_api::TargetKemAlgorithm {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::slh_dsa_api::TargetSlhDsaAlgorithm {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::SlhDsaSha2_128f => 0.into_dart(),
+            Self::SlhDsaSha2_192f => 1.into_dart(),
+            Self::SlhDsaSha2_256f => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::slh_dsa_api::TargetSlhDsaAlgorithm
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::slh_dsa_api::TargetSlhDsaAlgorithm>
+    for crate::api::slh_dsa_api::TargetSlhDsaAlgorithm
+{
+    fn into_into_dart(self) -> crate::api::slh_dsa_api::TargetSlhDsaAlgorithm {
         self
     }
 }
@@ -2272,6 +2716,14 @@ impl SseEncode for crate::api::secure_messaging_api::SecurePackageDto {
     }
 }
 
+impl SseEncode for crate::api::slh_dsa_api::SlhDsaKeyPairDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<u8>>::sse_encode(self.public_key, serializer);
+        <Vec<u8>>::sse_encode(self.secret_key, serializer);
+    }
+}
+
 impl SseEncode for crate::api::aead_api::TargetAeadAlgorithm {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2279,6 +2731,7 @@ impl SseEncode for crate::api::aead_api::TargetAeadAlgorithm {
             match self {
                 crate::api::aead_api::TargetAeadAlgorithm::Aes256Gcm => 0,
                 crate::api::aead_api::TargetAeadAlgorithm::ChaCha20Poly1305 => 1,
+                crate::api::aead_api::TargetAeadAlgorithm::XChaCha20Poly1305 => 2,
                 _ => {
                     unimplemented!("");
                 }
@@ -2296,6 +2749,42 @@ impl SseEncode for crate::api::dsa_api::TargetDsaAlgorithm {
                 crate::api::dsa_api::TargetDsaAlgorithm::MlDsa44 => 0,
                 crate::api::dsa_api::TargetDsaAlgorithm::MlDsa65 => 1,
                 crate::api::dsa_api::TargetDsaAlgorithm::MlDsa87 => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::hash_api::TargetHashAlgorithm {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::hash_api::TargetHashAlgorithm::Sha256 => 0,
+                crate::api::hash_api::TargetHashAlgorithm::Sha384 => 1,
+                crate::api::hash_api::TargetHashAlgorithm::Sha512 => 2,
+                crate::api::hash_api::TargetHashAlgorithm::Sha3_256 => 3,
+                crate::api::hash_api::TargetHashAlgorithm::Sha3_512 => 4,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::kdf_api::TargetHkdfHash {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::kdf_api::TargetHkdfHash::Sha256 => 0,
+                crate::api::kdf_api::TargetHkdfHash::Sha384 => 1,
+                crate::api::kdf_api::TargetHkdfHash::Sha512 => 2,
                 _ => {
                     unimplemented!("");
                 }
@@ -2330,6 +2819,23 @@ impl SseEncode for crate::api::kem_api::TargetKemAlgorithm {
                 crate::api::kem_api::TargetKemAlgorithm::MlKem512 => 0,
                 crate::api::kem_api::TargetKemAlgorithm::MlKem768 => 1,
                 crate::api::kem_api::TargetKemAlgorithm::MlKem1024 => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::slh_dsa_api::TargetSlhDsaAlgorithm {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::slh_dsa_api::TargetSlhDsaAlgorithm::SlhDsaSha2_128f => 0,
+                crate::api::slh_dsa_api::TargetSlhDsaAlgorithm::SlhDsaSha2_192f => 1,
+                crate::api::slh_dsa_api::TargetSlhDsaAlgorithm::SlhDsaSha2_256f => 2,
                 _ => {
                     unimplemented!("");
                 }
