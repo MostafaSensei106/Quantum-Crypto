@@ -8,10 +8,10 @@ enum SlhDsaAlgorithm {
 extension SlhDsaAlgorithmExtension on SlhDsaAlgorithm {
   String get name => switch (this) {
         SlhDsaAlgorithm.slhDsaSha2_128f =>
-          'SPHINCS+-SHA2-128f (NIST Security Level 1)',
+          'SPHINCS+-SHA2-128f (NIST Security Category 1)',
         SlhDsaAlgorithm.slhDsaSha2_192f =>
-          'SPHINCS+-SHA2-192f (NIST Security Level 3)',
+          'SPHINCS+-SHA2-192f (NIST Security Category 3)',
         SlhDsaAlgorithm.slhDsaSha2_256f =>
-          'SPHINCS+-SHA2-256f (NIST Security Level 5)',
+          'SPHINCS+-SHA2-256f (NIST Security Category 5)',
       };
 }

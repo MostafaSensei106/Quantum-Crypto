@@ -7,8 +7,8 @@ enum DsaAlgorithm {
 
 extension DsaAlgorithmExtension on DsaAlgorithm {
   String get name => switch (this) {
-        DsaAlgorithm.mlDsa44 => 'ML-DSA-44 (NIST Security Level 2)',
-        DsaAlgorithm.mlDsa65 => 'ML-DSA-65 (NIST Security Level 3)',
-        DsaAlgorithm.mlDsa87 => 'ML-DSA-87 (NIST Security Level 5)',
+        DsaAlgorithm.mlDsa44 => 'ML-DSA-44 (NIST Security Category 2)',
+        DsaAlgorithm.mlDsa65 => 'ML-DSA-65 (NIST Security Category 3)',
+        DsaAlgorithm.mlDsa87 => 'ML-DSA-87 (NIST Security Category 5)',
       };
 }
