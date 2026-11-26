@@ -31,8 +31,8 @@ final
     final dto = await rust_api.generateKemKeypair(algorithm: rustAlgorithm);
 
     return PqcKeyPair(
-      publicKey: Uint8List.fromList(dto.publicKey),
-      secretKey: Uint8List.fromList(dto.secretKey),
+      publicKey: dto.publicKey,
+      secretKey: dto.secretKey,
     );
   }
 
@@ -48,8 +48,8 @@ final
     );
 
     return PqcEncapsulationResult(
-      ciphertext: Uint8List.fromList(dto.ciphertext),
-      sharedSecret: Uint8List.fromList(dto.sharedSecret),
+      ciphertext: dto.ciphertext,
+      sharedSecret: dto.sharedSecret,
     );
   }
 
@@ -66,7 +66,7 @@ final
       secretKey: secretKey,
     );
 
-    return Uint8List.fromList(sharedSecretBytes);
+    return sharedSecretBytes;
   }
 
   rust_api.TargetKemAlgorithm _mapToRustAlgorithm(KemAlgorithm algorithm) {

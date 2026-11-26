@@ -9,6 +9,7 @@ import 'package:quantum_crypto/src/core/enums/hybrid_kem_algorithm.dart';
 /// Contains the encrypted payload along with the necessary ephemeral keys
 /// and ciphertexts required for the recipient to decrypt the data.
 final class SecurePackage {
+  final int version;
   final Uint8List mlKemCiphertext;
 
   /// The ephemeral X25519 public key used for the classical key exchange.
@@ -21,12 +22,18 @@ final class SecurePackage {
   final AeadAlgorithm aeadAlgorithm;
 
   /// Creates a new [SecurePackage].
-  const SecurePackage({
-    required this.mlKemCiphertext,
-    required this.x25519EphemeralPk,
-    required this.encryptedPayload,
+  SecurePackage({
+    required this.version,
+    required Uint8List mlKemCiphertext,
+    required Uint8List x25519EphemeralPk,
+    required Uint8List encryptedPayload,
     required this.dsaAlgorithm,
     required this.kemAlgorithm,
     required this.aeadAlgorithm,
-  });
+  })  : mlKemCiphertext =
+            Uint8List.fromList(mlKemCiphertext).asUnmodifiableView(),
+        x25519EphemeralPk =
+            Uint8List.fromList(x25519EphemeralPk).asUnmodifiableView(),
+        encryptedPayload =
+            Uint8List.fromList(encryptedPayload).asUnmodifiableView();
 }

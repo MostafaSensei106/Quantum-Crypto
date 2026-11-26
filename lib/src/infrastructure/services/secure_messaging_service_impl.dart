@@ -30,6 +30,8 @@ final class SecureMessagingServiceImpl implements SecureMessagingService {
   Future<SecurePackage> signAndEncrypt({
     required Uint8List message,
     required Uint8List senderDsaSecretKey,
+    required Uint8List senderDsaPublicKey,
+    Uint8List? associatedData,
     required Uint8List recipientMlKemPublicKey,
     required Uint8List recipientX25519PublicKey,
     DsaAlgorithm dsaAlgorithm = DsaAlgorithm.mlDsa65,
@@ -42,14 +44,17 @@ final class SecureMessagingServiceImpl implements SecureMessagingService {
       aeadAlgorithm: _mapAeadAlgorithm(aeadAlgorithm),
       message: message,
       senderDsaSecretKey: senderDsaSecretKey,
+      senderDsaPublicKey: senderDsaPublicKey,
+      associatedData: associatedData ?? Uint8List(0),
       recipientMlkemPublicKey: recipientMlKemPublicKey,
       recipientX25519PublicKey: recipientX25519PublicKey,
     );
 
     return SecurePackage(
-      mlKemCiphertext: Uint8List.fromList(result.mlkemCiphertext),
-      x25519EphemeralPk: Uint8List.fromList(result.x25519EphemeralPk),
-      encryptedPayload: Uint8List.fromList(result.encryptedPayload),
+      version: result.version,
+      mlKemCiphertext: result.mlkemCiphertext,
+      x25519EphemeralPk: result.x25519EphemeralPk,
+      encryptedPayload: result.encryptedPayload,
       dsaAlgorithm: dsaAlgorithm,
       kemAlgorithm: kemAlgorithm,
       aeadAlgorithm: aeadAlgorithm,
@@ -60,10 +65,17 @@ final class SecureMessagingServiceImpl implements SecureMessagingService {
   Future<Uint8List> decryptAndVerify({
     required SecurePackage package,
     required Uint8List recipientMlKemSecretKey,
+    required Uint8List recipientMlKemPublicKey,
+    required Uint8List recipientX25519PublicKey,
+    Uint8List? associatedData,
     required Uint8List recipientX25519SecretKey,
     required Uint8List senderDsaPublicKey,
   }) async {
     final result = await rust_api.decryptThenVerify(
+      version: package.version,
+      associatedData: associatedData ?? Uint8List(0),
+      recipientMlkemPublicKey: recipientMlKemPublicKey,
+      recipientX25519PublicKey: recipientX25519PublicKey,
       packageMlkemCiphertext: package.mlKemCiphertext,
       packageX25519EphemeralPk: package.x25519EphemeralPk,
       packageEncryptedPayload: package.encryptedPayload,
@@ -74,13 +86,15 @@ final class SecureMessagingServiceImpl implements SecureMessagingService {
       recipientX25519SecretKey: recipientX25519SecretKey,
       senderDsaPublicKey: senderDsaPublicKey,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
   Future<EncryptThenSignPackage> encryptAndSign({
     required Uint8List message,
     required Uint8List senderDsaSecretKey,
+    required Uint8List senderDsaPublicKey,
+    Uint8List? associatedData,
     required Uint8List recipientMlKemPublicKey,
     required Uint8List recipientX25519PublicKey,
     DsaAlgorithm dsaAlgorithm = DsaAlgorithm.mlDsa65,
@@ -93,15 +107,18 @@ final class SecureMessagingServiceImpl implements SecureMessagingService {
       aeadAlgorithm: _mapAeadAlgorithm(aeadAlgorithm),
       message: message,
       senderDsaSecretKey: senderDsaSecretKey,
+      senderDsaPublicKey: senderDsaPublicKey,
+      associatedData: associatedData ?? Uint8List(0),
       recipientMlkemPublicKey: recipientMlKemPublicKey,
       recipientX25519PublicKey: recipientX25519PublicKey,
     );
 
     return EncryptThenSignPackage(
-      mlKemCiphertext: Uint8List.fromList(result.mlkemCiphertext),
-      x25519EphemeralPk: Uint8List.fromList(result.x25519EphemeralPk),
-      encryptedPayload: Uint8List.fromList(result.encryptedPayload),
-      signature: Uint8List.fromList(result.signature),
+      version: result.version,
+      mlKemCiphertext: result.mlkemCiphertext,
+      x25519EphemeralPk: result.x25519EphemeralPk,
+      encryptedPayload: result.encryptedPayload,
+      signature: result.signature,
       dsaAlgorithm: dsaAlgorithm,
       kemAlgorithm: kemAlgorithm,
       aeadAlgorithm: aeadAlgorithm,
@@ -112,10 +129,17 @@ final class SecureMessagingServiceImpl implements SecureMessagingService {
   Future<Uint8List> verifyAndDecrypt({
     required EncryptThenSignPackage package,
     required Uint8List recipientMlKemSecretKey,
+    required Uint8List recipientMlKemPublicKey,
+    required Uint8List recipientX25519PublicKey,
+    Uint8List? associatedData,
     required Uint8List recipientX25519SecretKey,
     required Uint8List senderDsaPublicKey,
   }) async {
     final result = await rust_api.verifyThenDecrypt(
+      version: package.version,
+      associatedData: associatedData ?? Uint8List(0),
+      recipientMlkemPublicKey: recipientMlKemPublicKey,
+      recipientX25519PublicKey: recipientX25519PublicKey,
       packageMlkemCiphertext: package.mlKemCiphertext,
       packageX25519EphemeralPk: package.x25519EphemeralPk,
       packageEncryptedPayload: package.encryptedPayload,
@@ -127,7 +151,7 @@ final class SecureMessagingServiceImpl implements SecureMessagingService {
       recipientX25519SecretKey: recipientX25519SecretKey,
       senderDsaPublicKey: senderDsaPublicKey,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   dsa_rust_api.TargetDsaAlgorithm _mapDsaAlgorithm(DsaAlgorithm algo) {

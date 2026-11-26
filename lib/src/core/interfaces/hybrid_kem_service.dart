@@ -17,6 +17,8 @@ abstract interface class HybridKemService {
     required HybridKemAlgorithm algorithm,
     required Uint8List mlKemCiphertext,
     required Uint8List x25519EphemeralPk,
+    required Uint8List mlKemPublicKey,
+    required Uint8List x25519PublicKey,
     required Uint8List mlKemSecretKey,
     required Uint8List x25519SecretKey,
   });

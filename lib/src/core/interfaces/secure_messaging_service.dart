@@ -10,6 +10,8 @@ abstract interface class SecureMessagingService {
   Future<SecurePackage> signAndEncrypt({
     required Uint8List message,
     required Uint8List senderDsaSecretKey,
+    required Uint8List senderDsaPublicKey,
+    Uint8List? associatedData,
     required Uint8List recipientMlKemPublicKey,
     required Uint8List recipientX25519PublicKey,
     DsaAlgorithm dsaAlgorithm,
@@ -20,6 +22,9 @@ abstract interface class SecureMessagingService {
   Future<Uint8List> decryptAndVerify({
     required SecurePackage package,
     required Uint8List recipientMlKemSecretKey,
+    required Uint8List recipientMlKemPublicKey,
+    required Uint8List recipientX25519PublicKey,
+    Uint8List? associatedData,
     required Uint8List recipientX25519SecretKey,
     required Uint8List senderDsaPublicKey,
   });
@@ -27,6 +32,8 @@ abstract interface class SecureMessagingService {
   Future<EncryptThenSignPackage> encryptAndSign({
     required Uint8List message,
     required Uint8List senderDsaSecretKey,
+    required Uint8List senderDsaPublicKey,
+    Uint8List? associatedData,
     required Uint8List recipientMlKemPublicKey,
     required Uint8List recipientX25519PublicKey,
     DsaAlgorithm dsaAlgorithm,
@@ -37,6 +44,9 @@ abstract interface class SecureMessagingService {
   Future<Uint8List> verifyAndDecrypt({
     required EncryptThenSignPackage package,
     required Uint8List recipientMlKemSecretKey,
+    required Uint8List recipientMlKemPublicKey,
+    required Uint8List recipientX25519PublicKey,
+    Uint8List? associatedData,
     required Uint8List recipientX25519SecretKey,
     required Uint8List senderDsaPublicKey,
   });

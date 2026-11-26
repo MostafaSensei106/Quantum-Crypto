@@ -12,6 +12,7 @@ import 'package:quantum_crypto/src/core/enums/hybrid_kem_algorithm.dart';
 /// Contains the AEAD encrypted payload, ephemeral keys, and the digital signature
 /// of the sender to ensure both confidentiality and authenticity.
 final class EncryptThenSignPackage {
+  final int version;
   final Uint8List mlKemCiphertext;
 
   /// The ephemeral X25519 public key.
@@ -27,13 +28,20 @@ final class EncryptThenSignPackage {
   final AeadAlgorithm aeadAlgorithm;
 
   /// Creates a new [EncryptThenSignPackage].
-  const EncryptThenSignPackage({
-    required this.mlKemCiphertext,
-    required this.x25519EphemeralPk,
-    required this.encryptedPayload,
-    required this.signature,
+  EncryptThenSignPackage({
+    required this.version,
+    required Uint8List mlKemCiphertext,
+    required Uint8List x25519EphemeralPk,
+    required Uint8List encryptedPayload,
+    required Uint8List signature,
     required this.dsaAlgorithm,
     required this.kemAlgorithm,
     required this.aeadAlgorithm,
-  });
+  })  : mlKemCiphertext =
+            Uint8List.fromList(mlKemCiphertext).asUnmodifiableView(),
+        x25519EphemeralPk =
+            Uint8List.fromList(x25519EphemeralPk).asUnmodifiableView(),
+        encryptedPayload =
+            Uint8List.fromList(encryptedPayload).asUnmodifiableView(),
+        signature = Uint8List.fromList(signature).asUnmodifiableView();
 }

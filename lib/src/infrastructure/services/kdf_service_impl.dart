@@ -44,7 +44,7 @@ final
       outputLen: outputLength,
       hash: _mapHash(hash),
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
@@ -62,6 +62,6 @@ final
       keyLength: keyLength,
       hash: _mapHash(hash),
     );
-    return result.map((e) => Uint8List.fromList(e)).toList();
+    return result;
   }
 }

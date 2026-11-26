@@ -12,6 +12,7 @@ pub mod hybrid_kem_api;
 pub mod kdf_api;
 pub mod kem_api;
 pub mod key_serialization_api;
+pub mod native_keys_api;
 pub mod secure_messaging_api;
 pub mod seed_keygen_api;
 pub mod slh_dsa_api;

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:quantum_crypto/src/core/enums/slh_dsa_algorithm.dart';
 import 'package:quantum_crypto/src/core/models/key_pair.dart';
 
-/// Service for SLH-DSA (FIPS 205) stateless hash-based signatures.
+/// Service for SPHINCS+ (SLH-DSA API alias; final FIPS 205 equivalence unverified) stateless hash-based signatures.
 ///
 /// Unlike ML-DSA, SLH-DSA signatures are **detached**: [sign] returns the
 /// raw signature bytes only, and [verify] expects exactly those bytes.

@@ -29,7 +29,7 @@ final
       algorithm: _mapToRustAlgorithm(algorithm),
       data: data,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   rust_api.TargetHashAlgorithm _mapToRustAlgorithm(HashAlgorithm algorithm) {

@@ -28,7 +28,7 @@ final
   @override
   Future<Uint8List> hexToBytes(String hex) async {
     final result = await rust_api.hexToBytes(hex: hex);
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
@@ -39,7 +39,7 @@ final
   @override
   Future<Uint8List> base64ToBytes(String encoded) async {
     final result = await rust_api.base64ToBytes(encoded: encoded);
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
@@ -50,6 +50,6 @@ final
   @override
   Future<Uint8List> base64UrlSafeToBytes(String encoded) async {
     final result = await rust_api.base64UrlSafeToBytes(encoded: encoded);
-    return Uint8List.fromList(result);
+    return result;
   }
 }

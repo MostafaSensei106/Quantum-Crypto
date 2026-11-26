@@ -9,30 +9,53 @@ import 'dsa_api.dart';
 import 'hybrid_kem_api.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `decapsulate_with`, `decode_signed_payload`, `encapsulate_to`, `encode_signed_payload`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `EncapsulationParts`
+// These functions are ignored because they are not marked as `pub`: `context`, `encode_signed_payload`, `open`, `seal`, `signed_digest`
 
-/// Sign `message`, then encrypt (`message || signature`) to the recipient's
-/// hybrid KEM public keys.
 Future<SecurePackageDto> signThenEncrypt(
         {required TargetDsaAlgorithm dsaAlgorithm,
         required TargetHybridKemAlgorithm kemAlgorithm,
         required TargetAeadAlgorithm aeadAlgorithm,
         required List<int> message,
         required List<int> senderDsaSecretKey,
+        required List<int> senderDsaPublicKey,
         required List<int> recipientMlkemPublicKey,
-        required List<int> recipientX25519PublicKey}) =>
+        required List<int> recipientX25519PublicKey,
+        required List<int> associatedData}) =>
     RustLib.instance.api.crateApiSecureMessagingApiSignThenEncrypt(
         dsaAlgorithm: dsaAlgorithm,
         kemAlgorithm: kemAlgorithm,
         aeadAlgorithm: aeadAlgorithm,
         message: message,
         senderDsaSecretKey: senderDsaSecretKey,
+        senderDsaPublicKey: senderDsaPublicKey,
         recipientMlkemPublicKey: recipientMlkemPublicKey,
-        recipientX25519PublicKey: recipientX25519PublicKey);
+        recipientX25519PublicKey: recipientX25519PublicKey,
+        associatedData: associatedData);
+
+Future<EncryptThenSignPackageDto> encryptThenSign(
+        {required TargetDsaAlgorithm dsaAlgorithm,
+        required TargetHybridKemAlgorithm kemAlgorithm,
+        required TargetAeadAlgorithm aeadAlgorithm,
+        required List<int> message,
+        required List<int> senderDsaSecretKey,
+        required List<int> senderDsaPublicKey,
+        required List<int> recipientMlkemPublicKey,
+        required List<int> recipientX25519PublicKey,
+        required List<int> associatedData}) =>
+    RustLib.instance.api.crateApiSecureMessagingApiEncryptThenSign(
+        dsaAlgorithm: dsaAlgorithm,
+        kemAlgorithm: kemAlgorithm,
+        aeadAlgorithm: aeadAlgorithm,
+        message: message,
+        senderDsaSecretKey: senderDsaSecretKey,
+        senderDsaPublicKey: senderDsaPublicKey,
+        recipientMlkemPublicKey: recipientMlkemPublicKey,
+        recipientX25519PublicKey: recipientX25519PublicKey,
+        associatedData: associatedData);
 
 Future<Uint8List> decryptThenVerify(
-        {required List<int> packageMlkemCiphertext,
+        {required int version,
+        required List<int> packageMlkemCiphertext,
         required List<int> packageX25519EphemeralPk,
         required List<int> packageEncryptedPayload,
         required TargetDsaAlgorithm dsaAlgorithm,
@@ -40,8 +63,12 @@ Future<Uint8List> decryptThenVerify(
         required TargetAeadAlgorithm aeadAlgorithm,
         required List<int> recipientMlkemSecretKey,
         required List<int> recipientX25519SecretKey,
-        required List<int> senderDsaPublicKey}) =>
+        required List<int> recipientMlkemPublicKey,
+        required List<int> recipientX25519PublicKey,
+        required List<int> senderDsaPublicKey,
+        required List<int> associatedData}) =>
     RustLib.instance.api.crateApiSecureMessagingApiDecryptThenVerify(
+        version: version,
         packageMlkemCiphertext: packageMlkemCiphertext,
         packageX25519EphemeralPk: packageX25519EphemeralPk,
         packageEncryptedPayload: packageEncryptedPayload,
@@ -50,29 +77,14 @@ Future<Uint8List> decryptThenVerify(
         aeadAlgorithm: aeadAlgorithm,
         recipientMlkemSecretKey: recipientMlkemSecretKey,
         recipientX25519SecretKey: recipientX25519SecretKey,
-        senderDsaPublicKey: senderDsaPublicKey);
-
-/// Encrypt `message` to the recipient, then sign the ciphertext so anyone
-/// can verify authenticity before decryption.
-Future<EncryptThenSignPackageDto> encryptThenSign(
-        {required TargetDsaAlgorithm dsaAlgorithm,
-        required TargetHybridKemAlgorithm kemAlgorithm,
-        required TargetAeadAlgorithm aeadAlgorithm,
-        required List<int> message,
-        required List<int> senderDsaSecretKey,
-        required List<int> recipientMlkemPublicKey,
-        required List<int> recipientX25519PublicKey}) =>
-    RustLib.instance.api.crateApiSecureMessagingApiEncryptThenSign(
-        dsaAlgorithm: dsaAlgorithm,
-        kemAlgorithm: kemAlgorithm,
-        aeadAlgorithm: aeadAlgorithm,
-        message: message,
-        senderDsaSecretKey: senderDsaSecretKey,
         recipientMlkemPublicKey: recipientMlkemPublicKey,
-        recipientX25519PublicKey: recipientX25519PublicKey);
+        recipientX25519PublicKey: recipientX25519PublicKey,
+        senderDsaPublicKey: senderDsaPublicKey,
+        associatedData: associatedData);
 
 Future<Uint8List> verifyThenDecrypt(
-        {required List<int> packageMlkemCiphertext,
+        {required int version,
+        required List<int> packageMlkemCiphertext,
         required List<int> packageX25519EphemeralPk,
         required List<int> packageEncryptedPayload,
         required List<int> packageSignature,
@@ -81,8 +93,12 @@ Future<Uint8List> verifyThenDecrypt(
         required TargetAeadAlgorithm aeadAlgorithm,
         required List<int> recipientMlkemSecretKey,
         required List<int> recipientX25519SecretKey,
-        required List<int> senderDsaPublicKey}) =>
+        required List<int> recipientMlkemPublicKey,
+        required List<int> recipientX25519PublicKey,
+        required List<int> senderDsaPublicKey,
+        required List<int> associatedData}) =>
     RustLib.instance.api.crateApiSecureMessagingApiVerifyThenDecrypt(
+        version: version,
         packageMlkemCiphertext: packageMlkemCiphertext,
         packageX25519EphemeralPk: packageX25519EphemeralPk,
         packageEncryptedPayload: packageEncryptedPayload,
@@ -92,10 +108,13 @@ Future<Uint8List> verifyThenDecrypt(
         aeadAlgorithm: aeadAlgorithm,
         recipientMlkemSecretKey: recipientMlkemSecretKey,
         recipientX25519SecretKey: recipientX25519SecretKey,
-        senderDsaPublicKey: senderDsaPublicKey);
+        recipientMlkemPublicKey: recipientMlkemPublicKey,
+        recipientX25519PublicKey: recipientX25519PublicKey,
+        senderDsaPublicKey: senderDsaPublicKey,
+        associatedData: associatedData);
 
-/// Encrypted package produced by [`encrypt_then_sign`].
 class EncryptThenSignPackageDto {
+  final int version;
   final Uint8List mlkemCiphertext;
   final Uint8List x25519EphemeralPk;
   final Uint8List encryptedPayload;
@@ -105,6 +124,7 @@ class EncryptThenSignPackageDto {
   final TargetAeadAlgorithm aeadAlgorithm;
 
   const EncryptThenSignPackageDto({
+    required this.version,
     required this.mlkemCiphertext,
     required this.x25519EphemeralPk,
     required this.encryptedPayload,
@@ -116,6 +136,7 @@ class EncryptThenSignPackageDto {
 
   @override
   int get hashCode =>
+      version.hashCode ^
       mlkemCiphertext.hashCode ^
       x25519EphemeralPk.hashCode ^
       encryptedPayload.hashCode ^
@@ -129,6 +150,7 @@ class EncryptThenSignPackageDto {
       identical(this, other) ||
       other is EncryptThenSignPackageDto &&
           runtimeType == other.runtimeType &&
+          version == other.version &&
           mlkemCiphertext == other.mlkemCiphertext &&
           x25519EphemeralPk == other.x25519EphemeralPk &&
           encryptedPayload == other.encryptedPayload &&
@@ -138,8 +160,8 @@ class EncryptThenSignPackageDto {
           aeadAlgorithm == other.aeadAlgorithm;
 }
 
-/// Encrypted package produced by [`sign_then_encrypt`].
 class SecurePackageDto {
+  final int version;
   final Uint8List mlkemCiphertext;
   final Uint8List x25519EphemeralPk;
   final Uint8List encryptedPayload;
@@ -148,6 +170,7 @@ class SecurePackageDto {
   final TargetAeadAlgorithm aeadAlgorithm;
 
   const SecurePackageDto({
+    required this.version,
     required this.mlkemCiphertext,
     required this.x25519EphemeralPk,
     required this.encryptedPayload,
@@ -158,6 +181,7 @@ class SecurePackageDto {
 
   @override
   int get hashCode =>
+      version.hashCode ^
       mlkemCiphertext.hashCode ^
       x25519EphemeralPk.hashCode ^
       encryptedPayload.hashCode ^
@@ -170,6 +194,7 @@ class SecurePackageDto {
       identical(this, other) ||
       other is SecurePackageDto &&
           runtimeType == other.runtimeType &&
+          version == other.version &&
           mlkemCiphertext == other.mlkemCiphertext &&
           x25519EphemeralPk == other.x25519EphemeralPk &&
           encryptedPayload == other.encryptedPayload &&

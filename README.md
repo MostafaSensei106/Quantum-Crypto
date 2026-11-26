@@ -4,8 +4,8 @@
 </p>
 
 <p align="center">
-  <strong>An advanced, Post-Quantum Cryptography suite for Flutter, powered by Rust.</strong><br>
-  Future-proof your Flutter applications with implementations of <i>NIST-standardized algorithms</i> (ML-KEM, ML-DSA), <i>hybrid key exchanges</i>, and <i>secure messaging protocols</i>.
+  <strong>Post-quantum cryptography for Flutter, powered by Rust.</strong><br>
+  Native FFI integration for <i>ML-KEM and ML-DSA</i>, <i>native key management</i>, and <i>authenticated encryption</i>.
 </p>
 
 
@@ -17,79 +17,134 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="License: GPL-3.0"></a>
 </p>
 
+**0.0.3 · Dev Preview.** This package has not received an independent security
+audit and is not FIPS validated. Hybrid KEM and message protection are project
+constructions requiring specialist review. See [security guarantees and limits](doc/threat-model.md),
+[protocol formats](doc/protocols-v2.md), and the [migration guide](doc/migration-0.0.3.md).
+The dependency scan still flags upstream versions and unmaintained packages;
+local mitigations and remaining release blockers are documented in the
+[verification report](doc/security-verification.md).
 
 ## Table of Contents
 
-- [Why Choose Quantum-Crypto?](#-why-choose-quantum-crypto)
-- [Tech Stack](#-tech-stack)
-- [Prerequisites](#-prerequisites)
-- [Getting Started (Installation)](#-getting-started-installation)
-- [Basic Usage](#-basic-usage)
-- [Advanced Usage](#-advanced-usage)
-- [Performance Benchmarks](#-performance-benchmarks)
-- [Testing](#-testing)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [The Quantum Threat & The Solution](#quantum-threat)
+- [Why Choose Quantum-Crypto?](#why-choose-quantum-crypto)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Getting Started (Installation)](#getting-started)
+- [Basic Usage](#basic-usage)
+- [Advanced Usage](#advanced-usage)
+- [Performance Benchmarks](#performance-benchmarks)
+- [Architecture](#architecture)
+- [Testing](#testing)
+- [Security & Migration](#security-and-migration)
+- [Contributing](#contributing)
+- [License](#license)
+
 
 ---
+
+<a id="quantum-threat"></a>
 
 ## 🛡️ The Quantum Threat & The Solution
 
-> "With the NIST standardization of ML-KEM and ML-DSA (FIPS 203 & FIPS 204), transitioning to Post-Quantum Cryptography is no longer theoretical; it is an immediate engineering requirement."
+Classical public-key schemes such as RSA and elliptic-curve cryptography face a
+threat from sufficiently capable quantum computers. ML-KEM and ML-DSA provide
+post-quantum alternatives for key encapsulation and digital signatures.
 
-Classical public-key infrastructure (RSA, ECC, Curve25519) relies on integer factorization and discrete logarithms mathematical problems that Shor's algorithm can trivially solve on a sufficiently stable quantum computer. 
+Quantum-Crypto brings these operations into Flutter through a Rust core, alongside
+authenticated symmetric encryption and native key management. Choosing an algorithm
+is one part of building a secure application: key authentication, protocol design,
+storage and operational limits still matter. No library can guarantee protection
+against every future cryptanalytic development.
 
-While transitioning to lattice based cryptography (such as Kyber/ML-KEM and Dilithium/ML-DSA) solves the quantum threat vector, it introduces significant computational overhead. The polynomial matrices used in these algorithms require heavily optimized mathematics (e.g., the Number Theoretic Transform or NTT).
+---
+
+<a id="why-choose-quantum-crypto"></a>
+
+## 🤔 Why Choose Quantum-Crypto?
+
+Use a Dart facade for post-quantum operations while keeping cryptographic computation
+in native implementations. Native key handles let application code generate a key,
+sign or decrypt with it, read its public key, and dispose it without transporting
+the generated private key into Dart.
 
 **The FFI Advantage:**
-Implementing NTT and matrix arithmetic in pure Dart leads to heavy heap allocations, garbage collection thrashing, and UI thread blocking. `Quantum-Crypto` bypasses the Dart runtime entirely for cryptographic operations. By statically linking a compiled Rust core and passing memory pointers across the Flutter FFI boundary (Zero-Copy), the library achieves raw native execution speeds on both ARM and x86 architectures, minimizing UI thread blocking.
+The Rust dependencies provide the mathematical implementations and optimizations,
+including NTT operations. `flutter_rust_bridge` connects them to the Dart API.
+Buffer transfers, wrapper work and copies still involve Dart, and linking may be
+static or dynamic depending on the platform. Performance and UI responsiveness
+must be measured for the intended workload and device.
 
 ### 🔬 Technical Implementation Comparison
 
-| Vector | Legacy Dart Crypto | Pure Dart PQC | **Quantum-Crypto (Rust/FFI)** |
+| Vector | Dart Cryptography | Pure Dart PQC | **Quantum-Crypto (Rust/FFI)** |
 | :--- | :--- | :--- | :--- |
-| **Mathematical Core** | Prime Factorization / ECC | Lattice-Based | **Lattice-Based (NTT Optimized)** |
-| **Algorithm Standards** | Legacy | Drafts / Unverified | **✅ Implements FIPS 203 / 204 / 205** |
-| **Memory Allocation** | Dart Heap (Garbage Collected) | Dart Heap (Heavy Thrashing) | **🚀 Native Rust Allocator** |
-| **Thread Isolation** | Blocks Isolate if sync | Blocks Isolate | **⚡ OS-Level Background Threads** |
-| **Forward Secrecy** | Classical (ECDHE) | None | **🛡️ Hybrid (X25519 + ML-KEM)** |
+| **Mathematical Core** | Depends on the package and algorithms | Depends on the implementation | **Upstream Rust/C cryptographic implementations** |
+| **Algorithm Standards** | Must be checked per implementation | Must be checked per implementation | **ML-KEM/ML-DSA backends; no FIPS validation; final SLH-DSA equivalence unverified** |
+| **Secret Memory** | Depends on package and runtime behavior | Secrets may reside in Dart memory | **Optional native handles; byte APIs/import/export still involve Dart** |
+| **Thread Isolation** | Synchronous work can occupy its isolate; isolates are available | Can use isolates for CPU work | **Async bridge calls for native operations; measure end-to-end responsiveness** |
+| **Forward Secrecy** | A property of the protocol | A property of the protocol | **Not provided by the current static-recipient hybrid/message constructions** |
+
+Implementation language alone does not establish standards compliance, security,
+responsiveness or a speed advantage. Comparative performance requires equivalent
+algorithms, parameters and execution conditions.
 
 ---
+
+<a id="tech-stack"></a>
 
 ## 🛠 Tech Stack
 
-- **Language**: Dart (Frontend), Rust (Core Cryptography)
-- **Framework**: Flutter / Dart
-- **FFI Bridge**: `flutter_rust_bridge` (v2)
+- **Language**: Dart (public API), Rust (native core), C implementations through `pqcrypto`.
+- **Framework**: Flutter / Dart.
+- **FFI Bridge**: `flutter_rust_bridge` **2.13.0**, with matching generated bindings.
+- **Key Management**: opaque native handles, fixed usage/export policies, synchronized disposal.
 - **Algorithms Supported**:
-  - Key Encapsulation (KEM): **ML-KEM-512, ML-KEM-768, ML-KEM-1024**
-  - Digital Signatures (DSA): **ML-DSA-44, ML-DSA-65, ML-DSA-87**
-  - Hash-Based Signatures: **SLH-DSA-SHA2-128f, SLH-DSA-SHA2-192f, SLH-DSA-SHA2-256f**
-  - Hybrid KEM: **X25519 + ML-KEM**
-  - AEAD Encryption: **AES-256-GCM, ChaCha20Poly1305, XChaCha20Poly1305**
-  - Hashing: **SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-512**
-  - Data Processing: **Streaming Encryption, HKDF (SHA-256/384/512), Deterministic Seed Generation**
+  - Key Encapsulation (KEM): **ML-KEM-512, ML-KEM-768, ML-KEM-1024**.
+  - Digital Signatures (DSA): **ML-DSA-44, ML-DSA-65, ML-DSA-87**.
+  - Hash-Based Signatures: **SPHINCS+ SHA2-128f, SHA2-192f, SHA2-256f**, exposed through the historical `slhDsa` API names.
+  - Experimental Hybrid KEM v2: **X25519 + ML-KEM**, with context-bound HKDF and non-contributory X25519 rejection.
+  - AEAD Encryption: **AES-256-GCM, ChaCha20-Poly1305, XChaCha20-Poly1305**, with optional AAD.
+  - Hashing: **SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-512**.
+  - Data Processing: **STREAM-based in-memory chunked encryption v2**, **HKDF-SHA256/384/512**, **random master seeds and deterministic key-material derivation**.
+
+> **Standards note:** using algorithms associated with FIPS 203/204 does not make
+> this package FIPS validated. The `pqcrypto-sphincsplus` backend has not been
+> established as equivalent to final FIPS 205 SLH-DSA; retained API names do not
+> establish that equivalence.
+
+Android, iOS, Linux, macOS and Windows are declared plugin targets. CI contains
+build jobs for all five; workflow definitions do not establish that every job
+has passed. Web deployment is not a supported security target for this release.
 
 ---
+
+<a id="prerequisites"></a>
 
 ## 📋 Prerequisites
 
 > [!TIP]
-> **Don't worry about the "Rust Core"!**
-> Adding **Quantum-Crypto** to your project is designed to be as simple as adding any other Flutter package. You don't need to be a Rust expert or manage complex builds manually.
+> You can use the Dart API without writing Rust. The Rust toolchain is required
+> on the development machine to compile the native core for the target platform.
 
-Since this library uses a high-speed bridge to connect Flutter and Rust, you need the Rust compiler installed on your development machine to build the native binaries for your target platform.
-
-- **Windows**: Download and run [rustup-init.exe](https://rustup.rs).
-- **macOS / Linux**: Run the following command in your terminal:
-  ```bash
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-  ```
+- Install Flutter and its platform toolchains; check your setup with `flutter doctor`.
+- Install Rust and Cargo using [rustup](https://rustup.rs).
+- **Windows**: install the C/C++ build tools required by Rust and Flutter Windows builds.
+- **macOS / iOS**: install Xcode and the tooling required by Flutter for the target.
+- **Android**: install the Android SDK/NDK required by the native build.
+- **Linux**: install Flutter's desktop build dependencies, including a C/C++ compiler,
+  CMake, Ninja, pkg-config and GTK development libraries.
 
 > [!IMPORTANT]
-> Once Rust is installed, the build system will automatically detect your Flutter target and compile the Rust core into a high performance native shared library. You only need to set this up once!
+> Flutter platform build scripts compile the Rust core during application builds.
+> When running repository tests, build the native release library first so the
+> bridge can load it. Linux interoperability tests also require Python 3 and
+> system OpenSSL `libcrypto`.
 
 ---
+
+<a id="getting-started"></a>
 
 ## 🚀 Getting Started (Installation)
 
@@ -99,34 +154,63 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  quantum_crypto: ^0.0.1
+  quantum_crypto: ^0.0.3
 ```
+
+```bash
+flutter pub get
+```
+
+For reproducible Dev Preview deployments, pin `quantum_crypto: 0.0.3` instead of
+using a range. Review the [migration guide](doc/migration-0.0.3.md) before upgrading
+existing encrypted data: v1 streams and old message/hybrid formats are rejected.
 
 ### 2. Initialization
 
-You must initialize the native Rust library in your `main()` function before performing any cryptographic operations. This boots up the FFI bridge and allocates memory.
+Initialize once before cryptographic operations. In your Flutter application's
+`main()`, initialize the bridge before calling `runApp`:
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:quantum_crypto/quantum_crypto.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Load the native Rust binary into memory
   await QuantumCrypto.init();
-  
-  runApp(const MyApp());
+  // Call runApp with your application's root widget here.
 }
 ```
 
+### 3. Working on This Repository
+
+```bash
+git clone https://github.com/MostafaSensei106/Quantum-Crypto.git
+cd Quantum-Crypto
+flutter pub get
+cargo build --release --manifest-path rust/Cargo.toml
+```
+
+No database, server credentials or application `.env` file is required for the
+library examples. Package the matching native binary and Dart bindings together.
+
 ---
+
+<a id="basic-usage"></a>
 
 ## 📖 Basic Usage
 
+The snippets assume `QuantumCrypto.init()` has completed. Import
+`dart:typed_data`, `dart:convert` when using UTF-8, and
+`package:quantum_crypto/quantum_crypto.dart`. Statement-only snippets belong
+inside an `async` function. Prefer native handles when private keys do not need
+to leave Rust; the explicit byte-key APIs remain available.
+
 ### 1. Key Encapsulation Mechanism (ML-KEM)
 
-Generate post-quantum keys and securely encapsulate a shared secret.
+Generate post-quantum keys and encapsulate a shared secret. This example uses
+explicit byte-key APIs: the private key and shared secret reside in Dart.
+For a native-only secret path, use `nativeKeys.generateKem`,
+`nativeKeys.encapsulateKem`, and the recipient handle's `decapsulate`.
 
 ```dart
 import 'package:quantum_crypto/quantum_crypto.dart';
@@ -154,42 +238,45 @@ Future<void> performKem() async {
 
 ### 2. Digital Signatures (ML-DSA)
 
-Sign and verify data with quantum resistant signatures.
+Sign without exposing a private key:
 
 ```dart
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:quantum_crypto/quantum_crypto.dart';
-
-Future<void> signDocument() async {
-  final message = Uint8List.fromList(utf8.encode("Critical Contract"));
-  
-  // 1. Generate Key Pair
-  final keyPair = await QuantumCrypto.dsa.generateKeyPair(DsaAlgorithm.mlDsa65);
-
-  // 2. Sign the message
-  final signature = await QuantumCrypto.dsa.sign(
-    algorithm: DsaAlgorithm.mlDsa65,
-    message: message,
-    secretKey: keyPair.secretKey,
-  );
-
-  // 3. Verify the signature
-  final isValid = await QuantumCrypto.dsa.verify(
+final key = await QuantumCrypto.nativeKeys.generateDsa(
+  algorithm: DsaAlgorithm.mlDsa65,
+  exportable: false,
+);
+try {
+  final message = Uint8List.fromList([1, 2, 3]);
+  final signature = await key.sign(message);
+  final publicKey = await key.publicKey();
+  final valid = await QuantumCrypto.dsa.verify(
     algorithm: DsaAlgorithm.mlDsa65,
     message: message,
     signature: signature,
-    publicKey: keyPair.publicKey,
+    publicKey: publicKey,
   );
-  print('Signature valid: $isValid');
+  print(valid);
+} finally {
+  await key.dispose();
 }
 ```
 
-### 3. Hash-Based Signatures (SLH-DSA)
+The private key remains in Rust in this path. `dispose()` waits for active use,
+clears the owned secret buffers and invalidates every native alias. Call it
+explicitly; bridge finalization is only a backup. Handles live in this process
+and are not hardware-backed keys or a persistent keystore.
 
-Stateless hash-based signatures per FIPS 205. Security rests solely on hash-function
-strength (no lattice assumptions), at the cost of larger signatures and slower signing.
-Signatures are **detached** (message NOT embedded — unlike ML-DSA).
+`generateKem`, `generateHybrid`, `generateSlhDsa`, `generateAead`, and
+`generateSeed` provide the other key types. `usages` can restrict operations;
+incompatible operations are rejected in Rust. See [native key management](doc/native-keys.md).
+
+### 3. Hash-Based Signatures (SPHINCS+ / SLH-DSA API Names)
+
+The backend uses `pqcrypto-sphincsplus` SHA2 fast parameter sets. Final FIPS 205
+SLH-DSA equivalence is unverified. Signatures are **detached**; the attached-message
+convention used by the ML-DSA API is a backend/API choice, not a requirement of
+ML-DSA itself. This byte-key example has the same Dart-memory limitations as the
+KEM example. Native handles are available through `nativeKeys.generateSlhDsa`.
 
 ```dart
 import 'dart:convert';
@@ -218,38 +305,41 @@ Future<void> signHashBased() async {
     signature: signature,
     publicKey: keyPair.publicKey,
   );
-  print('SLH-DSA signature valid: $isValid');
+  print('SPHINCS+ signature valid: $isValid');
 }
 ```
 
 ### 4. AEAD Symmetric Encryption
 
-Fast, authenticated symmetric encryption (AES-256-GCM / ChaCha20Poly1305 /
-XChaCha20Poly1305). Prefer `xChaCha20Poly1305` when you cannot guarantee unique
-12-byte nonces — its 24-byte random nonce is safe without a counter.
-
 ```dart
-import 'package:quantum_crypto/quantum_crypto.dart';
-
-Future<void> encryptData() async {
-  final plaintext = Uint8List.fromList(utf8.encode("Secret Data"));
-  final key = Uint8List(32); // 256-bit key
-
-  // Encrypt
-  final ciphertext = await QuantumCrypto.aead.encrypt(
-    algorithm: AeadAlgorithm.aes256Gcm,
-    key: key,
-    plaintext: plaintext,
-  );
-
-  // Decrypt
-  final decrypted = await QuantumCrypto.aead.decrypt(
-    algorithm: AeadAlgorithm.aes256Gcm,
-    key: key,
-    ciphertextWithNonce: ciphertext,
-  );
+final key = await QuantumCrypto.nativeKeys.generateAead(
+  algorithm: AeadAlgorithm.xChaCha20Poly1305,
+);
+try {
+  final message = Uint8List.fromList([10, 20, 30]);
+  final metadata = Uint8List.fromList([1]);
+  final ciphertext = await key.encrypt(message, associatedData: metadata);
+  final plaintext = await key.decrypt(ciphertext, associatedData: metadata);
+  print(plaintext);
+} finally {
+  await key.dispose();
 }
 ```
+
+AAD is authenticated but unencrypted; both parties must supply identical bytes.
+The existing `QuantumCrypto.aead` byte-key API also accepts `associatedData`.
+For byte-key applications use `Random.secure()` or an operating-system CSPRNG,
+not a zero-filled `Uint8List(32)`. Keep persistent keys in a platform keystore or
+an encrypted key store whose wrapping key is protected separately. Handle export
+and platform storage integration are explicit application responsibilities.
+
+Random 96-bit nonces have a birthday collision risk. Adopt a conservative
+application limit of at most 2^16 encryptions per key across all senders and
+copies of that key, and rotate earlier for your threat model. This is a project
+policy, not a universal AEAD security bound or an enforced counter. Prefer
+XChaCha20-Poly1305 for random-nonce workloads; rotate keys for exposure and
+lifecycle reasons even with its larger nonce space. See [RFC 8439](https://www.rfc-editor.org/rfc/rfc8439.html)
+and [SP 800-38D](https://csrc.nist.gov/pubs/sp/800/38/d/final).
 
 ### 5. Key Serialization
 
@@ -289,123 +379,242 @@ Future<void> hashData() async {
 }
 ```
 
+### 7. Native Key Management
+
+| Key type | Constructor | Secret operations |
+| :--- | :--- | :--- |
+| ML-DSA | `generateDsa` | `sign`, `signAndEncrypt`, `encryptAndSign` |
+| SPHINCS+ | `generateSlhDsa` | `sign` |
+| ML-KEM | `generateKem` | `decapsulate` into a shared-secret handle |
+| Hybrid | `generateHybrid` | `decapsulate`, `decryptAndVerify`, `verifyAndDecrypt` |
+| AEAD | `generateAead` | `encrypt`, `decrypt`, `streamEncrypt`, `streamDecrypt` |
+| Master seed / shared secret | `generateSeed` / encapsulation result | `deriveAead` |
+
+`exportable` defaults to `false` and cannot be enabled later. `exportSecret()` is
+an explicit operation that succeeds only for an exportable key; exported bytes
+then reside in Dart. `importKey` supports existing keys but cannot erase the
+original Dart copies. A non-exportable parent cannot derive an exportable child.
+The `usages` option restricts permitted operations in Rust.
+
+Use `try/finally` and `await key.dispose()`. Disposal waits for active operations,
+clears project-owned secret buffers, and invalidates native aliases. Derived
+children have independent lifetimes. See [native key management](doc/native-keys.md)
+for import, export and lifecycle details.
+
 ---
+
+<a id="advanced-usage"></a>
 
 ## 🔬 Advanced Usage
 
 ### Defense-in-Depth with Hybrid KEM
 
-For enhanced security, use the Hybrid KEM which combines classical X25519 Elliptic Curve cryptography with Post-Quantum ML-KEM. If a quantum computer breaks ML-KEM, the classical X25519 protects you. If an attacker solves X25519 today, the ML-KEM protects you against future quantum attacks!
+Hybrid v2 combines ML-KEM and X25519 with a versioned, context-bound HKDF.
+X25519 non-contributory shared secrets are rejected. All three parameter sets
+are project constructions, not implementations of an established hybrid protocol.
+A sufficiently capable quantum computer threatens X25519 as well; it is not a
+fallback guarantee against quantum attacks on ML-KEM.
 
 ```dart
 final hybridKeyPair = await QuantumCrypto.hybrid.generateKeyPair(
-  HybridKemAlgorithm.mlKem768X25519
+  HybridKemAlgorithm.mlKem768X25519,
 );
-
 final result = await QuantumCrypto.hybrid.encapsulate(
   algorithm: HybridKemAlgorithm.mlKem768X25519,
   mlKemPublicKey: hybridKeyPair.mlKemPublicKey,
   x25519PublicKey: hybridKeyPair.x25519PublicKey,
 );
+final sharedSecret = await QuantumCrypto.hybrid.decapsulate(
+  algorithm: HybridKemAlgorithm.mlKem768X25519,
+  mlKemCiphertext: result.mlKemCiphertext,
+  x25519EphemeralPk: result.x25519EphemeralPk,
+  mlKemPublicKey: hybridKeyPair.mlKemPublicKey,
+  x25519PublicKey: hybridKeyPair.x25519PublicKey,
+  mlKemSecretKey: hybridKeyPair.mlKemSecretKey,
+  x25519SecretKey: hybridKeyPair.x25519SecretKey,
+);
+print(sharedSecret.length); // 32; byte-key API output resides in Dart.
 ```
+
+For native shared secrets, use `nativeKeys.generateHybrid` and
+`nativeKeys.encapsulateHybrid`, then derive an AEAD handle on each side with
+the same algorithm, context and key index. The v2 ciphertext includes a version
+byte; preserve the bytes exactly as returned. See [protocol formats](doc/protocols-v2.md).
 
 ### Sign-then-Encrypt Secure Messaging
 
-Send highly secure messages combining AEAD encryption (AES-256-GCM / ChaCha20Poly1305), ML-KEM exchange, and ML-DSA signatures automatically.
+The `messaging` APIs and matching native-key methods provide Sign-then-Encrypt
+and Encrypt-then-Sign. Hybrid recipient keys are required. Version, composition,
+algorithms, public keys, KEM outputs and application AAD are bound cryptographically.
+Applications must authenticate public keys and implement identity, sessions,
+sequence/message IDs and replay detection. These are message protection
+primitives, not a complete chat protocol. Static recipient keys do not provide
+forward secrecy after recipient-key compromise.
+
+ML-DSA byte signatures currently use the upstream attached-message convention;
+that is an API choice, not a requirement of ML-DSA. Hash-based signature APIs
+return detached SPHINCS+ signatures. Messaging signs a domain-separated
+SHA-256 transcript digest; it does not claim HashML-DSA conformance.
+
+This native-key example keeps generated signing and recipient private keys in Rust:
 
 ```dart
-final package = await QuantumCrypto.messaging.signAndEncrypt(
-  message: Uint8List.fromList(utf8.encode("Top Secret")),
-  senderDsaSecretKey: myDsaSecretKey,
-  recipientMlKemPublicKey: targetKemPublicKey,
-  recipientX25519PublicKey: targetX25519PublicKey, // Optional Hybrid
+final sender = await QuantumCrypto.nativeKeys.generateDsa(
+  algorithm: DsaAlgorithm.mlDsa65,
 );
-
-// Decrypt on the other side
-final originalMessage = await QuantumCrypto.messaging.decryptAndVerify(
-  package: package,
-  recipientMlKemSecretKey: myKemSecretKey,
-  recipientX25519SecretKey: myX25519SecretKey,
-  senderDsaPublicKey: senderDsaPublicKey,
-);
+try {
+  final recipient = await QuantumCrypto.nativeKeys.generateHybrid(
+    algorithm: HybridKemAlgorithm.mlKem768X25519,
+  );
+  try {
+    final message = Uint8List.fromList(utf8.encode('Top Secret'));
+    final context = Uint8List.fromList(utf8.encode('example/message/v2'));
+    final package = await sender.signAndEncrypt(
+      message: message,
+      recipientAlgorithm: HybridKemAlgorithm.mlKem768X25519,
+      recipientMlKemPublicKey: await recipient.publicKey(),
+      recipientX25519PublicKey: await recipient.secondaryPublicKey(),
+      associatedData: context,
+    );
+    final originalMessage = await recipient.decryptAndVerify(
+      package: package,
+      senderDsaPublicKey: await sender.publicKey(),
+      associatedData: context,
+    );
+    print(utf8.decode(originalMessage)); // Top Secret
+  } finally {
+    await recipient.dispose();
+  }
+} finally {
+  await sender.dispose();
+}
 ```
+
+For Encrypt-then-Sign, use `sender.encryptAndSign` and
+`recipient.verifyAndDecrypt` with the corresponding package type. That mode
+exposes the signature and supports verification before decryption. Hybrid
+recipient keys are required in both modes; they are not optional.
+
+The byte-key `QuantumCrypto.messaging` service also remains available. In v2,
+creation requires `senderDsaPublicKey`, and opening requires the recipient's
+ML-KEM and X25519 public keys in addition to secret keys. Both modes accept
+`associatedData`, and package versions must be preserved.
 
 ### Streaming AEAD Encryption
 
-For encrypting large payloads chunk-by-chunk without loading everything into memory at once.
-
 ```dart
-final encryptedStream = await QuantumCrypto.streaming.streamEncrypt(
-  algorithm: AeadAlgorithm.chaCha20Poly1305,
-  key: key,
-  plaintext: largeData,
-  chunkSize: 65536, // Optional: Process in 64KB chunks
+final key = await QuantumCrypto.nativeKeys.generateAead(
+  algorithm: AeadAlgorithm.xChaCha20Poly1305,
 );
-
-final decryptedStream = await QuantumCrypto.streaming.streamDecrypt(
-  key: key,
-  encryptedData: encryptedStream,
-);
+try {
+  final data = Uint8List.fromList([1, 2, 3]);
+  final encrypted = await key.streamEncrypt(data, chunkSize: 65536);
+  final decrypted = await key.streamDecrypt(encrypted);
+  print(decrypted);
+} finally {
+  await key.dispose();
+}
 ```
+
+Version 2 uses a fresh random salt, a derived per-stream key, authenticated
+headers and STREAM sequence/final-segment authentication. Empty data includes an
+authentication tag. Version 1 is rejected. These APIs take complete buffers;
+they do not provide file streaming or constant-memory I/O.
+
+Messages and stream plaintext are limited to 64 MiB, AAD to 1 MiB, and chunk
+sizes to 1..1 MiB. Encoded streams must also fit the 66 MiB encoded-size limit;
+small chunks can hit this limit sooner. FFI decoding itself may allocate before
+Rust checks these bounds, so applications must also limit untrusted ingress.
+
+The existing `QuantumCrypto.streaming.streamEncrypt` / `streamDecrypt` APIs
+accept explicit byte keys and now use the same v2 format. The native example
+above generates a process-local key for the round trip; persistent ciphertext
+requires an application-managed key recovery/storage strategy.
 
 ### Key Derivation Function (HKDF)
 
-Derive strong, cryptographically secure keys from shared secrets.
-Defaults to HKDF-SHA-256; pass `hash:` for SHA-384 / SHA-512.
+Derive key material from a high-entropy shared secret. The byte API supports
+SHA-256 (default), SHA-384 and SHA-512. The following function takes a shared
+secret already obtained from a validated exchange; it does not generate one:
 
 ```dart
-final derivedKey = await QuantumCrypto.kdf.derive(
-  sharedSecret: kemSharedSecret,
-  info: Uint8List.fromList(utf8.encode("app_encryption_key")),
-  outputLength: 32, // Output 32 bytes (256 bits)
-);
-
-// With explicit digest selection:
-final derivedKey512 = await QuantumCrypto.kdf.derive(
-  sharedSecret: kemSharedSecret,
-  info: Uint8List.fromList(utf8.encode("app_encryption_key")),
-  outputLength: 64,
-  hash: HkdfHash.sha512,
-);
+Future<Uint8List> deriveApplicationKey(Uint8List kemSharedSecret) async {
+  return QuantumCrypto.kdf.derive(
+    sharedSecret: kemSharedSecret,
+    info: Uint8List.fromList(utf8.encode('example/aes256gcm/v2')),
+    outputLength: 32,
+    hash: HkdfHash.sha256,
+  );
+}
 ```
+
+Use different contexts for different applications, protocols and algorithms.
+`deriveMulti` can derive separate outputs with distinct `infoStrings`.
+Native seed/shared-secret handles provide `deriveAead`, binding the chosen AEAD
+algorithm, application context and key index without exporting the input secret.
 
 ### Deterministic Seed Generation
 
-Generate master seeds and deterministically derive specific keys (useful for hierarchical wallets or secure device storage).
+Master seeds are generated randomly; key material is derived deterministically.
 
 ```dart
-// 1. Generate a secure master seed
-final masterSeed = await QuantumCrypto.seed.generateSeed();
-
-// 2. Derive specific keys deterministically
-final mlKemKey = await QuantumCrypto.seed.deriveKey(
-  seed: masterSeed,
-  purpose: "ml-kem-key",
-  keyIndex: 0,
-);
-
-final x25519Key = await QuantumCrypto.seed.deriveX25519Key(
-  seed: masterSeed,
-  keyIndex: 0,
-);
-
-final aeadKey = await QuantumCrypto.seed.deriveAeadKey(
-  seed: masterSeed,
-  keyIndex: 0,
-);
+final seed = await QuantumCrypto.nativeKeys.generateSeed();
+try {
+  final key = await seed.deriveAead(
+    algorithm: AeadAlgorithm.xChaCha20Poly1305,
+    context: Uint8List.fromList(utf8.encode('example/file-encryption/v2')),
+    keyIndex: 0,
+  );
+  try {
+    final ciphertext = await key.encrypt(
+      Uint8List.fromList(utf8.encode('Derived-key example')),
+    );
+    print(ciphertext.length);
+  } finally {
+    await key.dispose();
+  }
+} finally {
+  await seed.dispose();
+}
 ```
+
+Generate seeds from a CSPRNG. Seed length does not prove entropy, and HKDF is
+not a password KDF. Compromise of a master seed exposes every key derivable
+from it. The byte seed APIs derive key material, not deterministic ML-KEM or
+ML-DSA key pairs. Native `deriveAead` requires an application context and binds
+the chosen AEAD algorithm and key index. Use separate contexts for separate
+protocols and applications.
+
+Native handles avoid transporting generated private keys into Dart. Rust-owned
+secret containers are cleared on disposal/drop where this project controls them.
+No complete erasure guarantee is made for upstream C/PQ buffers, allocator
+copies, stack/register spills, process dumps, or Dart buffers created through
+legacy byte APIs, import or explicit export. Secret-bearing Dart key models use
+identity equality and owned read-only byte snapshots.
 
 ---
 
+<a id="performance-benchmarks"></a>
+
 ## ⚡ Performance Benchmarks
 
-The **Quantum-Crypto** library runs its cryptography in native Rust and crosses to Dart over FFI, so even heavy 1024-dimensional lattice operations stay off the UI thread.
+Cryptographic operations run in native dependencies; Dart-side measurements include
+FFI and wrapper work. Algorithm names such as ML-KEM-1024 identify parameter sets,
+not a claim that every operation is a "1024-dimensional" computation.
 
 ### 📊 Comprehensive Execution Benchmarks
 
-Measured with the in-repo Dart benchmark harness: 100 warmup + 1000 timed iterations per operation, calling the Rust engine over FFI. Reproduce on your machine with:
+> **Historical 0.0.2 results:** the table below retains the original measurements.
+> CPU, RAM, operating system, architecture and build mode were not recorded.
+> These are not measurements of 0.0.3 and do not establish superiority over Dart
+> implementations. Hash-based and pipeline labels have been corrected to describe
+> the backend/operation actually measured; numeric results are unchanged.
+
+The in-repo Dart harness defaults to 100 warmup and 1000 timed iterations per
+operation. To collect a new run after building the native library:
 
 ```bash
+cargo build --release --manifest-path rust/Cargo.toml
 flutter test test/benchmark_test.dart
 ```
 
@@ -435,18 +644,18 @@ flutter test test/benchmark_test.dart
 | **ML-DSA-87** | Sign | 172.7 | 110.0 | 547.0 | 157.0 | 5790.8 |
 | **ML-DSA-87** | Verify | 101.2 | 96.0 | 296.0 | 99.0 | 9879.5 |
 | **ML-DSA-87** | Roundtrip | 377.6 | 305.0 | 988.0 | 357.0 | 2648.1 |
-| **SLH-DSA-SHA2-128f** | KeyGen | 354.5 | 326.0 | 671.0 | 337.0 | 2821.1 |
-| **SLH-DSA-SHA2-128f** | Sign | 7400.0 | 6665.0 | 10569.0 | 7366.0 | 135.1 |
-| **SLH-DSA-SHA2-128f** | Verify | 684.3 | 638.0 | 951.0 | 654.0 | 1461.3 |
-| **SLH-DSA-SHA2-128f** | Roundtrip | 8525.5 | 7912.0 | 10089.0 | 8492.0 | 117.3 |
-| **SLH-DSA-SHA2-192f** | KeyGen | 517.9 | 449.0 | 748.0 | 486.0 | 1930.9 |
-| **SLH-DSA-SHA2-192f** | Sign | 11482.8 | 10744.0 | 13374.0 | 11430.0 | 87.1 |
-| **SLH-DSA-SHA2-192f** | Verify | 1029.8 | 899.0 | 1392.0 | 1046.0 | 971.1 |
-| **SLH-DSA-SHA2-192f** | Roundtrip | 13203.0 | 12227.0 | 17817.0 | 13172.0 | 75.7 |
-| **SLH-DSA-SHA2-256f** | KeyGen | 1393.6 | 1194.0 | 2272.0 | 1399.0 | 717.6 |
-| **SLH-DSA-SHA2-256f** | Sign | 24150.2 | 23015.0 | 25731.0 | 24092.0 | 41.4 |
-| **SLH-DSA-SHA2-256f** | Verify | 1165.9 | 972.0 | 6192.0 | 1177.0 | 857.7 |
-| **SLH-DSA-SHA2-256f** | Roundtrip | 26899.2 | 25371.0 | 33231.0 | 26879.0 | 37.2 |
+| **SPHINCS+-SHA2-128f** | KeyGen | 354.5 | 326.0 | 671.0 | 337.0 | 2821.1 |
+| **SPHINCS+-SHA2-128f** | Sign | 7400.0 | 6665.0 | 10569.0 | 7366.0 | 135.1 |
+| **SPHINCS+-SHA2-128f** | Verify | 684.3 | 638.0 | 951.0 | 654.0 | 1461.3 |
+| **SPHINCS+-SHA2-128f** | Roundtrip | 8525.5 | 7912.0 | 10089.0 | 8492.0 | 117.3 |
+| **SPHINCS+-SHA2-192f** | KeyGen | 517.9 | 449.0 | 748.0 | 486.0 | 1930.9 |
+| **SPHINCS+-SHA2-192f** | Sign | 11482.8 | 10744.0 | 13374.0 | 11430.0 | 87.1 |
+| **SPHINCS+-SHA2-192f** | Verify | 1029.8 | 899.0 | 1392.0 | 1046.0 | 971.1 |
+| **SPHINCS+-SHA2-192f** | Roundtrip | 13203.0 | 12227.0 | 17817.0 | 13172.0 | 75.7 |
+| **SPHINCS+-SHA2-256f** | KeyGen | 1393.6 | 1194.0 | 2272.0 | 1399.0 | 717.6 |
+| **SPHINCS+-SHA2-256f** | Sign | 24150.2 | 23015.0 | 25731.0 | 24092.0 | 41.4 |
+| **SPHINCS+-SHA2-256f** | Verify | 1165.9 | 972.0 | 6192.0 | 1177.0 | 857.7 |
+| **SPHINCS+-SHA2-256f** | Roundtrip | 26899.2 | 25371.0 | 33231.0 | 26879.0 | 37.2 |
 | **Hybrid ML-KEM-512** | KeyGen | 63.0 | 58.0 | 314.0 | 60.0 | 15881.1 |
 | **Hybrid ML-KEM-512** | Encapsulate | 113.1 | 106.0 | 444.0 | 109.0 | 8844.8 |
 | **Hybrid ML-KEM-512** | Decapsulate | 98.1 | 92.0 | 537.0 | 95.0 | 10189.1 |
@@ -484,11 +693,153 @@ flutter test test/benchmark_test.dart
 | **SHA-256 (1 KB)** | Digest | 38.8 | 35.0 | 310.0 | 38.0 | 25802.5 |
 | **SHA3-512 (1 KB)** | Digest | 39.7 | 37.0 | 201.0 | 38.0 | 25166.7 |
 | **Seed Generation** | Generate | 37.0 | 35.0 | 374.0 | 36.0 | 27058.5 |
-| **Deterministic Key** | Derive (Kem) | 40.3 | 37.0 | 316.0 | 39.0 | 24829.9 |
-| **Sign-then-Encrypt Pipeline** | EncryptAndSign | 252.5 | 176.0 | 830.0 | 234.0 | 3959.7 |
-| **Sign-then-Encrypt Pipeline** | VerifyAndDecr | 166.5 | 152.0 | 389.0 | 158.0 | 6006.4 |
+| **HKDF Seed Bytes** | Derive | 40.3 | 37.0 | 316.0 | 39.0 | 24829.9 |
+| **Encrypt-then-Sign Pipeline** | EncryptAndSign | 252.5 | 176.0 | 830.0 | 234.0 | 3959.7 |
+| **Encrypt-then-Sign Pipeline** | VerifyAndDecr | 166.5 | 152.0 | 389.0 | 158.0 | 6006.4 |
+
+### 🔬 Reproducing and Interpreting Results
+
+Record hardware, OS, architecture, compiler versions, Rust/Flutter build modes,
+commit, algorithm parameters, message sizes and iteration counts. Compare native
+benchmark timings with end-to-end Dart timings using equivalent workloads.
+Peak memory, allocations, frame drops, FFI overhead and physical Android/iOS
+results require their own measurements. Parameter-set timings can vary across
+platforms and runs; unexpected ordering needs investigation rather than a
+blanket claim that one parameter set is faster.
+
+A short API smoke run is available, but is not a publishable benchmark:
+
+```bash
+flutter test test/benchmark_test.dart --dart-define=BENCHMARK_WARMUP=3 --dart-define=BENCHMARK_ITERATIONS=5
+```
+
+See [benchmark methodology](doc/benchmarks.md) and the
+[historical table provenance](doc/benchmarks-legacy.md).
 
 ---
+
+<a id="architecture"></a>
+
+## 🏛️ Architecture
+
+```text
+Flutter / Dart application
+  → QuantumCrypto facade and public service interfaces
+  → native key wrappers or explicit byte-key APIs
+  → generated flutter_rust_bridge bindings
+  → Rust API validation and opaque handle lifecycle
+  → core engines / strategy factories
+  → upstream PQC, AEAD, hash and KDF implementations
+```
+
+| Location | Responsibility |
+| :--- | :--- |
+| `lib/quantum_crypto.dart`, `lib/src/crypto.dart` | Public exports, initialization and facade |
+| `lib/src/core/` | Algorithms, models and service interfaces |
+| `lib/src/native/` | Public native-key wrappers |
+| `lib/src/infrastructure/services/` | Byte-key service adapters |
+| `lib/src/rust/`, `rust/src/frb_generated.rs` | Generated bridge code |
+| `rust/src/api/`, `rust/src/core/`, `rust/src/factory/` | Native API, engines, validation and dispatch |
+| `rust/tests/`, `rust/fuzz/`, `test/` | Vectors, regression/property tests, fuzzing and Dart integration |
+| `example/`, `doc/`, `tools/` | Example application, detailed documentation and verification tools |
+
+For bridge changes, regenerate with the matching code generator rather than
+editing generated files by hand:
+
+```bash
+cargo install flutter_rust_bridge_codegen --version 2.13.0 --locked
+flutter_rust_bridge_codegen generate
+```
+
+---
+
+<a id="testing"></a>
+
+## 🧪 Testing
+
+### Running the Checks
+
+Run these commands from the repository root:
+
+```bash
+flutter pub get
+cargo test --locked --manifest-path rust/Cargo.toml
+cargo clippy --locked --manifest-path rust/Cargo.toml --all-targets -- -D warnings
+python3 tools/check_dependency_policy.py
+cargo build --locked --release --manifest-path rust/Cargo.toml
+flutter analyze --no-pub
+flutter test --no-pub test/native_keys_test.dart test/hybrid_kem_test.dart test/hash_aead_kdf_test.dart test/ml_dsa_test.dart test/ml_kem_test.dart test/slh_dsa_test.dart
+```
+
+### Coverage and Verification
+
+| Area | Checks |
+| :--- | :--- |
+| Streaming v2 | Empty input, header/ciphertext tampering, ordering, truncation, extra data and wrong keys |
+| Hybrid / messaging v2 | Non-contributory X25519 rejection, key/context binding and version enforcement |
+| Native keys | Export/usage restrictions, import, derivation, concurrent use and synchronized disposal |
+| Reference vectors | Selected NIST AES-GCM/ML-KEM, RFC HKDF and Wycheproof ML-DSA cases |
+| Interoperability | Independent OpenSSL AES-GCM/ChaCha20-Poly1305 and STREAM decoding on Linux |
+| Parser robustness | Property tests and a libFuzzer target |
+
+The recorded local verification includes 21 Rust tests, 22 Flutter tests including
+a benchmark smoke run, and a Linux example build. Other platform/device runs
+remain to be confirmed. These are engineering checks, not an independent audit
+or full NIST conformance validation.
+
+### Fuzzing and Dependency Auditing
+
+```bash
+cargo install cargo-fuzz --version 0.13.2 --locked
+cd rust
+cargo +nightly fuzz run parsers -- -max_total_time=60 -max_len=8192
+```
+
+Dependency scanning, from the repository root:
+
+```bash
+cargo install cargo-audit --version 0.23.0 --locked
+cargo audit --file rust/Cargo.lock
+cargo audit --file rust/fuzz/Cargo.lock
+```
+
+Raw dependency auditing still flags affected upstream versions and unmaintained
+packages. Local mitigations disable the affected ML-DSA AVX2 path and validate
+ML-KEM inputs; these do not replace the dependencies or resolve their maintenance
+status. The [verification report](doc/security-verification.md) records findings,
+commands, test-vector scope and production-release requirements.
+
+---
+
+<a id="security-and-migration"></a>
+
+## 🔒 Security & Migration
+
+| Topic | Current guarantee or responsibility |
+| :--- | :--- |
+| Development status | Dev Preview; no independent audit or FIPS validation |
+| Native secrets | Generated private keys stay in Rust unless explicitly exportable and exported |
+| Memory cleanup | Project-controlled secret buffers are cleared on close/drop; complete erasure across runtimes/dependencies is not guaranteed |
+| Streaming | Authenticated v2 headers, sequence and final/empty segments; whole-buffer API |
+| Hybrid / messaging | Context-bound project constructions requiring specialist review |
+| Forward secrecy | Not provided after compromise of static recipient keys |
+| Identity / replay / sessions | Application or higher-level protocol responsibility |
+| Persistence | Native handles are process-local, not a hardware-backed or persistent keystore |
+| Migration | v1 streams and old hybrid/message formats are rejected; no automatic fallback |
+
+Keep persistent keys in a platform keystore or an encrypted store whose wrapping
+key is protected separately. Plan recovery before discarding a process-local
+handle used for persistent data. Never log private keys or master seeds.
+
+Read the [threat model](doc/threat-model.md), [v2 protocol formats](doc/protocols-v2.md),
+[migration guide](doc/migration-0.0.3.md) and [verification report](doc/security-verification.md).
+Report vulnerabilities privately using the contact and process in [SECURITY.md](SECURITY.md).
+Release changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+<a id="contributing"></a>
+
 ## 🤝 Contributing
 
 Contributions are welcome! Here’s how to get started:
@@ -498,10 +849,13 @@ Contributions are welcome! Here’s how to get started:
 3.  Commit your changes: `git commit -m "Add amazing feature"`
 4.  Push to your branch: `git push origin feature/YourFeature`
 5.  Open a pull request.
+
 > 💡 Please read our **[Contributing Guidelines](CONTRIBUTING.md)** and open an issue first for major feature ideas or changes.
 
-
 ---
+
+<a id="license"></a>
+
 ## ⚖️ License
 
 This project is dual-licensed:

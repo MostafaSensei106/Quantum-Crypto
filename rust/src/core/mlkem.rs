@@ -18,6 +18,15 @@ impl MlKemStrategy {
     }
 }
 
+impl MlKemStrategy {
+    fn rank(&self) -> usize {
+        match self.variant {
+            MlKemVariant::MlKem512 => 2,
+            MlKemVariant::MlKem768 => 3,
+            MlKemVariant::MlKem1024 => 4,
+        }
+    }
+}
 impl KemStrategy for MlKemStrategy {
     fn generate_keypair(&self) -> Result<KeyPair, String> {
         match self.variant {
@@ -52,6 +61,7 @@ impl KemStrategy for MlKemStrategy {
     }
 
     fn encapsulate(&self, public_key: &[u8]) -> Result<EncapsulationResult, String> {
+        crate::core::mlkem_validation::validate_public_key(public_key, self.rank())?;
         match self.variant {
             MlKemVariant::MlKem512 => {
                 let pk = mlkem512::PublicKey::from_bytes(public_key)
@@ -84,6 +94,7 @@ impl KemStrategy for MlKemStrategy {
     }
 
     fn decapsulate(&self, ciphertext: &[u8], secret_key: &[u8]) -> Result<Vec<u8>, String> {
+        crate::core::mlkem_validation::validate_secret_key(secret_key, self.rank())?;
         match self.variant {
             MlKemVariant::MlKem512 => {
                 let ct = mlkem512::Ciphertext::from_bytes(ciphertext)

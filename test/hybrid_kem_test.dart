@@ -41,6 +41,8 @@ void main() {
           algorithm: algorithm,
           mlKemCiphertext: encResult.mlKemCiphertext,
           x25519EphemeralPk: encResult.x25519EphemeralPk,
+          mlKemPublicKey: keyPair.mlKemPublicKey,
+          x25519PublicKey: keyPair.x25519PublicKey,
           mlKemSecretKey: keyPair.mlKemSecretKey,
           x25519SecretKey: keyPair.x25519SecretKey,
         );

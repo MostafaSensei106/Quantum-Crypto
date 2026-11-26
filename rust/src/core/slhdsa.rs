@@ -1,7 +1,7 @@
 use crate::core::traits::{DsaKeyPair, DsaSecretKeyContainer, DsaStrategy};
 use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as _, SecretKey as _};
 
-/// SLH-DSA (FIPS 205) parameter sets exposed by this library.
+/// SPHINCS+ (SLH-DSA API alias; final FIPS 205 equivalence unverified) parameter sets exposed by this library.
 ///
 /// Only the SHA-2 `f` ("fast signing") variants are exposed: signing with
 /// the `s` ("small signature") variants is orders of magnitude slower,
@@ -13,11 +13,11 @@ use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as _, SecretKey as
 /// [`DsaStrategy::verify`] expects those exact bytes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SlhDsaVariant {
-    /// SLH-DSA-SHA2-128f — NIST security level 1, ~17 KB signatures.
+    /// SLH-DSA-SHA2-128f  NIST security level 1, ~17 KB signatures.
     Sha2_128f,
-    /// SLH-DSA-SHA2-192f — NIST security level 3, ~35 KB signatures.
+    /// SLH-DSA-SHA2-192f  NIST security level 3, ~35 KB signatures.
     Sha2_192f,
-    /// SLH-DSA-SHA2-256f — NIST security level 5, ~49 KB signatures.
+    /// SLH-DSA-SHA2-256f  NIST security level 5, ~49 KB signatures.
     Sha2_256f,
 }
 
@@ -54,6 +54,7 @@ impl DsaStrategy for SlhDsaStrategy {
     }
 
     fn sign(&self, message: &[u8], secret_key: &[u8]) -> Result<Vec<u8>, String> {
+        crate::core::security::bounded(message.len(), crate::core::security::MAX_PLAINTEXT)?;
         let label = self.variant.fips_name();
         let signature = match self.variant {
             SlhDsaVariant::Sha2_128f => {
@@ -79,6 +80,8 @@ impl DsaStrategy for SlhDsaStrategy {
     }
 
     fn verify(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> Result<bool, String> {
+        crate::core::security::bounded(message.len(), crate::core::security::MAX_PLAINTEXT)?;
+        crate::core::security::bounded(signature.len(), crate::core::security::MAX_ENCODED)?;
         let label = self.variant.fips_name();
         let valid = match self.variant {
             SlhDsaVariant::Sha2_128f => {
@@ -111,7 +114,7 @@ impl DsaStrategy for SlhDsaStrategy {
 }
 
 impl SlhDsaVariant {
-    /// Full FIPS 205 parameter-set name, used in error messages and benchmarks.
+    /// Historical SLH-DSA API parameter-set label, used in error messages and benchmarks.
     #[must_use]
     pub fn fips_name(&self) -> &'static str {
         match self {

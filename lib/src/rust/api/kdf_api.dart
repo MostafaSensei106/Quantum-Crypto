@@ -7,13 +7,13 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `expand`, `salt_or_none`, `validate_ikm`, `validate_output_len`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `eq`, `fmt`
 
 /// Derive `output_len` bytes from `shared_secret` with an explicit digest.
 ///
-/// * `salt` — optional salt; empty means "no salt" (not a zeroed salt).
-/// * `info` — context/application-specific separation string.
-/// * `output_len` — 1..=8160.
+/// * `salt`  optional salt; empty means "no salt" (not a zeroed salt).
+/// * `info`  context/application-specific separation string.
+/// * `output_len`  1..=8160.
 Future<Uint8List> hkdfDeriveWithHash(
         {required List<int> sharedSecret,
         required List<int> salt,

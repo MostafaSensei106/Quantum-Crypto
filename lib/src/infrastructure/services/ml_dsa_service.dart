@@ -30,8 +30,8 @@ final
     final dto = await rust_api.generateDsaKeypair(algorithm: rustAlgorithm);
 
     return PqcKeyPair(
-      publicKey: Uint8List.fromList(dto.publicKey),
-      secretKey: Uint8List.fromList(dto.secretKey),
+      publicKey: dto.publicKey,
+      secretKey: dto.secretKey,
     );
   }
 
@@ -48,7 +48,7 @@ final
       secretKey: secretKey,
     );
 
-    return Uint8List.fromList(signatureBytes);
+    return signatureBytes;
   }
 
   @override

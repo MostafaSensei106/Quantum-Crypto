@@ -5,8 +5,9 @@ final class PqcEncapsulationResult {
   final Uint8List ciphertext;
   final Uint8List sharedSecret;
 
-  const PqcEncapsulationResult({
-    required this.ciphertext,
-    required this.sharedSecret,
-  });
+  PqcEncapsulationResult({
+    required Uint8List ciphertext,
+    required Uint8List sharedSecret,
+  })  : ciphertext = Uint8List.fromList(ciphertext).asUnmodifiableView(),
+        sharedSecret = Uint8List.fromList(sharedSecret).asUnmodifiableView();
 }

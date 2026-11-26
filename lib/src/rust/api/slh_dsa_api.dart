@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `strategy`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `eq`, `fmt`, `from`, `from`
 
 /// Generate an SLH-DSA key pair for `algorithm`.
 Future<SlhDsaKeyPairDto> generateSlhDsaKeypair(
@@ -24,7 +24,7 @@ Future<Uint8List> slhDsaSign(
         algorithm: algorithm, message: message, secretKey: secretKey);
 
 /// Verify a detached `signature` over `message`.
-/// Returns `Ok(false)` — not an error — when the signature is invalid.
+/// Returns `Ok(false)`  not an error  when the signature is invalid.
 Future<bool> slhDsaVerify(
         {required TargetSlhDsaAlgorithm algorithm,
         required List<int> message,
@@ -58,15 +58,15 @@ class SlhDsaKeyPairDto {
           secretKey == other.secretKey;
 }
 
-/// SLH-DSA parameter set (FIPS 205, SHA-2 fast-signing variants).
+/// SPHINCS+ SHA-2 fast variants, exposed through historical SLH-DSA API names.
 enum TargetSlhDsaAlgorithm {
-  /// SLH-DSA-SHA2-128f — NIST security level 1.
+  /// SLH-DSA-SHA2-128f  NIST security level 1.
   slhDsaSha2128F,
 
-  /// SLH-DSA-SHA2-192f — NIST security level 3.
+  /// SLH-DSA-SHA2-192f  NIST security level 3.
   slhDsaSha2192F,
 
-  /// SLH-DSA-SHA2-256f — NIST security level 5.
+  /// SLH-DSA-SHA2-256f  NIST security level 5.
   slhDsaSha2256F,
   ;
 }

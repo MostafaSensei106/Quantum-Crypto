@@ -1,8 +1,8 @@
-//! Benchmark suite — FFI boundary.
+//! Benchmark suite  FFI boundary.
 //!
 //! Every `run_*` entry point takes explicit iteration counts so callers
 //! (and CI) control suite cost. SLH-DSA signing is clamped to a handful of
-//! iterations internally — it is ~100× slower than ML-DSA by design — and
+//! iterations internally  its cost depends on the variant and platform  and
 //! the actual iteration count is always reported back per result.
 
 use std::time::Instant;
@@ -197,7 +197,7 @@ fn benchmark_dsa_set(name: &str, iterations: u32) -> Result<Vec<BenchmarkResult>
     Ok(out)
 }
 
-/// SLH-DSA signing is ~100× slower than ML-DSA, so sign iterations are
+/// Hash-based signing can be substantially slower than ML-DSA, so sign iterations are
 /// clamped to at most 5 to keep the suite practical.
 fn benchmark_slh_dsa_set(name: &str, iterations: u32) -> Result<Vec<BenchmarkResult>, String> {
     use crate::core::slhdsa::SlhDsaStrategy;
@@ -252,6 +252,8 @@ fn benchmark_hybrid_set(name: &str, iterations: u32) -> Result<Vec<BenchmarkResu
             &enc.x25519_ephemeral_pk,
             &kp.mlkem_secret_key,
             &kp.x25519_secret_key,
+            &kp.mlkem_public_key,
+            &kp.x25519_public_key,
         )?;
         Ok(())
     })?);
@@ -321,10 +323,10 @@ fn benchmark_hash_set(name: &str, iterations: u32) -> Result<Vec<BenchmarkResult
 /// Run the full benchmark suite covering KEM, DSA, SLH-DSA, hybrid KEM,
 /// AEAD, and hashing.
 ///
-/// * `kem_iterations` — iterations for KEM / hybrid / hash benchmarks
-/// * `dsa_iterations` — iterations for DSA benchmarks (SLH-DSA signing is
+/// * `kem_iterations`  iterations for KEM / hybrid / hash benchmarks
+/// * `dsa_iterations`  iterations for DSA benchmarks (SLH-DSA signing is
 ///   clamped internally, see [`benchmark_slh_dsa_set`])
-/// * `aead_iterations` — iterations for AEAD benchmarks
+/// * `aead_iterations`  iterations for AEAD benchmarks
 pub fn run_benchmark_suite(
     kem_iterations: u32,
     dsa_iterations: u32,

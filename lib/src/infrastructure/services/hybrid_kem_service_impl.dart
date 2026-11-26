@@ -42,10 +42,10 @@ final
         await rust_api.generateHybridKemKeypair(algorithm: targetAlgo);
 
     return HybridKeyPair(
-      mlKemPublicKey: Uint8List.fromList(result.mlkemPublicKey),
-      x25519PublicKey: Uint8List.fromList(result.x25519PublicKey),
-      mlKemSecretKey: Uint8List.fromList(result.mlkemSecretKey),
-      x25519SecretKey: Uint8List.fromList(result.x25519SecretKey),
+      mlKemPublicKey: result.mlkemPublicKey,
+      x25519PublicKey: result.x25519PublicKey,
+      mlKemSecretKey: result.mlkemSecretKey,
+      x25519SecretKey: result.x25519SecretKey,
     );
   }
 
@@ -63,9 +63,9 @@ final
     );
 
     return HybridEncapsulationResult(
-      mlKemCiphertext: Uint8List.fromList(result.mlkemCiphertext),
-      x25519EphemeralPk: Uint8List.fromList(result.x25519EphemeralPk),
-      sharedSecret: Uint8List.fromList(result.sharedSecret),
+      mlKemCiphertext: result.mlkemCiphertext,
+      x25519EphemeralPk: result.x25519EphemeralPk,
+      sharedSecret: result.sharedSecret,
     );
   }
 
@@ -74,6 +74,8 @@ final
     required HybridKemAlgorithm algorithm,
     required Uint8List mlKemCiphertext,
     required Uint8List x25519EphemeralPk,
+    required Uint8List mlKemPublicKey,
+    required Uint8List x25519PublicKey,
     required Uint8List mlKemSecretKey,
     required Uint8List x25519SecretKey,
   }) async {
@@ -82,10 +84,12 @@ final
       algorithm: targetAlgo,
       mlkemCiphertext: mlKemCiphertext,
       x25519EphemeralPk: x25519EphemeralPk,
+      mlkemPublicKey: mlKemPublicKey,
+      x25519PublicKey: x25519PublicKey,
       mlkemSecretKey: mlKemSecretKey,
       x25519SecretKey: x25519SecretKey,
     );
 
-    return Uint8List.fromList(result);
+    return result;
   }
 }

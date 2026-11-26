@@ -1,31 +1,33 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:quantum_crypto/src/core/interfaces/aead_service.dart';
+import 'package:quantum_crypto/src/core/interfaces/benchmark_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/dsa_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/hash_service.dart';
-import 'package:quantum_crypto/src/core/interfaces/slh_dsa_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/hybrid_kem_service.dart';
+import 'package:quantum_crypto/src/core/interfaces/kdf_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/kem_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/key_serialization_service.dart';
 import 'package:quantum_crypto/src/core/interfaces/secure_messaging_service.dart';
+import 'package:quantum_crypto/src/core/interfaces/seed_service.dart';
+import 'package:quantum_crypto/src/core/interfaces/slh_dsa_service.dart';
+import 'package:quantum_crypto/src/core/interfaces/streaming_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/aead_service_impl.dart';
+import 'package:quantum_crypto/src/infrastructure/services/benchmark_service_impl.dart';
 import 'package:quantum_crypto/src/infrastructure/services/hash_service_impl.dart';
-import 'package:quantum_crypto/src/infrastructure/services/slh_dsa_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/hybrid_kem_service_impl.dart';
+import 'package:quantum_crypto/src/infrastructure/services/kdf_service_impl.dart';
 import 'package:quantum_crypto/src/infrastructure/services/key_serialization_service_impl.dart';
 import 'package:quantum_crypto/src/infrastructure/services/ml_dsa_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/ml_kem_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/secure_messaging_service_impl.dart';
-import 'package:quantum_crypto/src/core/interfaces/streaming_service.dart';
-import 'package:quantum_crypto/src/infrastructure/services/streaming_service_impl.dart';
-import 'package:quantum_crypto/src/core/interfaces/kdf_service.dart';
-import 'package:quantum_crypto/src/infrastructure/services/kdf_service_impl.dart';
-import 'package:quantum_crypto/src/core/interfaces/seed_service.dart';
 import 'package:quantum_crypto/src/infrastructure/services/seed_service_impl.dart';
-import 'package:quantum_crypto/src/core/interfaces/benchmark_service.dart';
-import 'package:quantum_crypto/src/infrastructure/services/benchmark_service_impl.dart';
+import 'package:quantum_crypto/src/infrastructure/services/slh_dsa_service.dart';
+import 'package:quantum_crypto/src/infrastructure/services/streaming_service_impl.dart';
 import 'package:quantum_crypto/src/rust/frb_generated.dart';
 
-/// QuantumCrypto — Unified Post-Quantum Cryptography Facade.
+import 'native/native_keys.dart';
+
+/// QuantumCrypto  Unified Post-Quantum Cryptography Facade.
 ///
 /// Provides both high-level and low-level access to:
 /// - ML-KEM (Key Encapsulation)
@@ -54,7 +56,7 @@ abstract final class QuantumCrypto {
   /// ```
   /// On web, the WASM artifacts are pre-loaded from the Flutter asset path
   /// (`assets/packages/quantum_crypto/web/pkg/`) so that `flutter build web`
-  /// automatically bundles them — no manual copy step needed.
+  /// automatically bundles them  no manual copy step needed.
   ///
   static Future<void> init() async {
     if (_isInitialized) return;
@@ -71,6 +73,10 @@ abstract final class QuantumCrypto {
     await RustLib.init();
     _isInitialized = true;
   }
+
+  /// Native-owned secret keys with explicit disposal and export policy.
+  static const NativeKeysService nativeKeys = NativeKeysService();
+
   // === Low-Level Services ===
 
   /// ML-KEM Key Encapsulation Mechanism service.
@@ -79,7 +85,7 @@ abstract final class QuantumCrypto {
   /// ML-DSA Digital Signature Algorithm service.
   static const DsaService dsa = MlDsaService();
 
-  /// SLH-DSA (FIPS 205) stateless hash-based signature service.
+  /// SPHINCS+ (SLH-DSA API alias; final FIPS 205 equivalence unverified) stateless hash-based signature service.
   static const SlhDsaService slhDsa = SlhDsaServiceImpl();
 
   /// One-shot hash (SHA-2 / SHA-3) service.

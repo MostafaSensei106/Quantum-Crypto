@@ -1,25 +1,25 @@
-//! SLH-DSA (FIPS 205) stateless hash-based signatures — FFI boundary.
+//! SPHINCS+ (SLH-DSA API alias; final FIPS 205 equivalence unverified) stateless hash-based signatures  FFI boundary.
 //!
 //! Unlike ML-DSA, SLH-DSA signatures are **detached**: [`slh_dsa_sign`]
 //! returns the raw signature bytes only, and [`slh_dsa_verify`] expects
 //! exactly those bytes alongside the original message.
 //!
 //! Trade-off vs ML-DSA: larger signatures (17–49 KB) and slower signing,
-//! but security rests solely on hash-function strength — no lattice
+//! but security rests solely on hash-function strength  no lattice
 //! assumptions. Only the SHA-2 `f` (fast-signing) parameter sets are
 //! exposed; see [`SlhDsaVariant`](crate::core::slhdsa::SlhDsaVariant).
 
 use crate::core::slhdsa::{SlhDsaStrategy, SlhDsaVariant};
 use crate::core::traits::{DsaKeyPair, DsaStrategy};
 
-/// SLH-DSA parameter set (FIPS 205, SHA-2 fast-signing variants).
+/// SPHINCS+ SHA-2 fast variants, exposed through historical SLH-DSA API names.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TargetSlhDsaAlgorithm {
-    /// SLH-DSA-SHA2-128f — NIST security level 1.
+    /// SLH-DSA-SHA2-128f  NIST security level 1.
     SlhDsaSha2_128f,
-    /// SLH-DSA-SHA2-192f — NIST security level 3.
+    /// SLH-DSA-SHA2-192f  NIST security level 3.
     SlhDsaSha2_192f,
-    /// SLH-DSA-SHA2-256f — NIST security level 5.
+    /// SLH-DSA-SHA2-256f  NIST security level 5.
     SlhDsaSha2_256f,
 }
 
@@ -67,11 +67,12 @@ pub fn slh_dsa_sign(
     message: Vec<u8>,
     secret_key: Vec<u8>,
 ) -> Result<Vec<u8>, String> {
+    let secret_key = zeroize::Zeroizing::new(secret_key);
     strategy(algorithm).sign(&message, &secret_key)
 }
 
 /// Verify a detached `signature` over `message`.
-/// Returns `Ok(false)` — not an error — when the signature is invalid.
+/// Returns `Ok(false)`  not an error  when the signature is invalid.
 pub fn slh_dsa_verify(
     algorithm: TargetSlhDsaAlgorithm,
     message: Vec<u8>,

@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `eq`, `fmt`, `from`
 
 /// Encrypt `plaintext` with a 32-byte `key`; returns `nonce || ciphertext+tag`.
 Future<Uint8List> aeadEncrypt(
@@ -26,16 +26,39 @@ Future<Uint8List> aeadDecrypt(
         key: key,
         ciphertextWithNonce: ciphertextWithNonce);
 
+/// Encrypt with authenticated, unencrypted metadata.
+Future<Uint8List> aeadEncryptWithAad(
+        {required TargetAeadAlgorithm algorithm,
+        required List<int> key,
+        required List<int> plaintext,
+        required List<int> associatedData}) =>
+    RustLib.instance.api.crateApiAeadApiAeadEncryptWithAad(
+        algorithm: algorithm,
+        key: key,
+        plaintext: plaintext,
+        associatedData: associatedData);
+
+/// Decrypt with the identical authenticated metadata.
+Future<Uint8List> aeadDecryptWithAad(
+        {required TargetAeadAlgorithm algorithm,
+        required List<int> key,
+        required List<int> ciphertextWithNonce,
+        required List<int> associatedData}) =>
+    RustLib.instance.api.crateApiAeadApiAeadDecryptWithAad(
+        algorithm: algorithm,
+        key: key,
+        ciphertextWithNonce: ciphertextWithNonce,
+        associatedData: associatedData);
+
 /// AEAD cipher selection.
 enum TargetAeadAlgorithm {
-  /// AES-256-GCM — fastest where AES hardware acceleration exists.
+  /// AES-256-GCM  fastest where AES hardware acceleration exists.
   aes256Gcm,
 
-  /// ChaCha20-Poly1305 — fastest without AES hardware (mobile/ARM).
+  /// ChaCha20-Poly1305  fastest without AES hardware (mobile/ARM).
   chaCha20Poly1305,
 
-  /// XChaCha20-Poly1305 — 24-byte random nonce; safe without a counter
-  /// and the right default for streaming and multi-sender use.
+  /// XChaCha20-Poly1305  24-byte random nonce with a larger collision margin.
   xChaCha20Poly1305,
   ;
 }

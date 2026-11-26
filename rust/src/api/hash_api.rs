@@ -1,4 +1,4 @@
-//! One-shot cryptographic hash API — FFI boundary.
+//! One-shot cryptographic hash API  FFI boundary.
 //!
 //! SHA-2 and SHA-3 digests for content addressing, key commitment, and
 //! transcript hashing around the PQC primitives.
@@ -8,15 +8,15 @@ use crate::core::hash::{digest, HashAlgorithm};
 /// Digest algorithm selection.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TargetHashAlgorithm {
-    /// SHA-256 — 32-byte digest (default interop choice).
+    /// SHA-256  32-byte digest (default interop choice).
     Sha256,
-    /// SHA-384 — 48-byte digest.
+    /// SHA-384  48-byte digest.
     Sha384,
-    /// SHA-512 — 64-byte digest.
+    /// SHA-512  64-byte digest.
     Sha512,
-    /// SHA3-256 — 32-byte digest (NIST FIPS 202).
+    /// SHA3-256  32-byte digest (NIST FIPS 202).
     Sha3_256,
-    /// SHA3-512 — 64-byte digest (NIST FIPS 202).
+    /// SHA3-512  64-byte digest (NIST FIPS 202).
     Sha3_512,
 }
 

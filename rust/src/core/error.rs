@@ -33,7 +33,11 @@ impl fmt::Display for CryptoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CryptoError::InvalidKeyLength { expected, actual } => {
-                write!(f, "Invalid key length: expected {} bytes, got {}", expected, actual)
+                write!(
+                    f,
+                    "Invalid key length: expected {} bytes, got {}",
+                    expected, actual
+                )
             }
             CryptoError::InvalidKeyFormat { algorithm, detail } => {
                 write!(f, "Invalid key format for {}: {}", algorithm, detail)
@@ -57,7 +61,11 @@ impl fmt::Display for CryptoError {
                 write!(f, "Key derivation failed: {}", detail)
             }
             CryptoError::InvalidSeedLength { minimum, actual } => {
-                write!(f, "Seed too short: minimum {} bytes, got {}", minimum, actual)
+                write!(
+                    f,
+                    "Seed too short: minimum {} bytes, got {}",
+                    minimum, actual
+                )
             }
             CryptoError::StreamFormatError { detail } => {
                 write!(f, "Stream format error: {}", detail)

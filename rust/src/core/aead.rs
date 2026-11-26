@@ -1,4 +1,7 @@
-use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
+use aes_gcm::{
+    aead::{Aead, Payload},
+    Aes256Gcm, KeyInit, Nonce,
+};
 use chacha20poly1305::{ChaCha20Poly1305, XChaCha20Poly1305, XNonce};
 use rand_core::{OsRng, RngCore};
 
@@ -13,7 +16,7 @@ use rand_core::{OsRng, RngCore};
 pub enum AeadAlgorithmVariant {
     Aes256Gcm,
     ChaCha20Poly1305,
-    /// Extended-nonce variant: safe to use with random nonces, no counter needed.
+    /// Extended-nonce variant with a larger random-nonce collision margin.
     XChaCha20Poly1305,
 }
 
@@ -45,32 +48,48 @@ impl AeadEngine {
     }
 
     pub fn encrypt(&self, key: &[u8], plaintext: &[u8]) -> Result<Vec<u8>, String> {
-        Self::check_key(key)?;
+        self.encrypt_with_aad(key, plaintext, &[])
+    }
 
+    pub fn encrypt_with_aad(
+        &self,
+        key: &[u8],
+        plaintext: &[u8],
+        aad: &[u8],
+    ) -> Result<Vec<u8>, String> {
+        Self::check_key(key)?;
+        crate::core::security::bounded(plaintext.len(), crate::core::security::MAX_ENCODED)?;
+        crate::core::security::bounded(aad.len(), crate::core::security::MAX_AAD)?;
+        let payload = Payload {
+            msg: plaintext,
+            aad,
+        };
         let nonce_len = self.variant.nonce_len();
         let mut nonce_bytes = vec![0u8; nonce_len];
-        OsRng.fill_bytes(&mut nonce_bytes);
+        OsRng
+            .try_fill_bytes(&mut nonce_bytes)
+            .map_err(|_| "OS randomness unavailable")?;
 
         let ciphertext = match self.variant {
             AeadAlgorithmVariant::Aes256Gcm => {
                 let cipher = Aes256Gcm::new_from_slice(key)
                     .map_err(|e| format!("Invalid key length: {e}"))?;
                 cipher
-                    .encrypt(Nonce::from_slice(&nonce_bytes), plaintext)
+                    .encrypt(Nonce::from_slice(&nonce_bytes), payload)
                     .map_err(|e| format!("Encryption failed: {e}"))?
             }
             AeadAlgorithmVariant::ChaCha20Poly1305 => {
                 let cipher = ChaCha20Poly1305::new_from_slice(key)
                     .map_err(|e| format!("Invalid key length: {e}"))?;
                 cipher
-                    .encrypt(Nonce::from_slice(&nonce_bytes), plaintext)
+                    .encrypt(Nonce::from_slice(&nonce_bytes), payload)
                     .map_err(|e| format!("Encryption failed: {e}"))?
             }
             AeadAlgorithmVariant::XChaCha20Poly1305 => {
                 let cipher = XChaCha20Poly1305::new_from_slice(key)
                     .map_err(|e| format!("Invalid key length: {e}"))?;
                 cipher
-                    .encrypt(XNonce::from_slice(&nonce_bytes), plaintext)
+                    .encrypt(XNonce::from_slice(&nonce_bytes), payload)
                     .map_err(|e| format!("Encryption failed: {e}"))?
             }
         };
@@ -82,8 +101,21 @@ impl AeadEngine {
     }
 
     pub fn decrypt(&self, key: &[u8], ciphertext_with_nonce: &[u8]) -> Result<Vec<u8>, String> {
-        Self::check_key(key)?;
+        self.decrypt_with_aad(key, ciphertext_with_nonce, &[])
+    }
 
+    pub fn decrypt_with_aad(
+        &self,
+        key: &[u8],
+        ciphertext_with_nonce: &[u8],
+        aad: &[u8],
+    ) -> Result<Vec<u8>, String> {
+        Self::check_key(key)?;
+        crate::core::security::bounded(
+            ciphertext_with_nonce.len(),
+            crate::core::security::MAX_ENCODED + 40,
+        )?;
+        crate::core::security::bounded(aad.len(), crate::core::security::MAX_AAD)?;
         // Ciphertext must hold at least nonce + 16-byte Poly1305/GMAC tag.
         let min_len = self.variant.nonce_len() + 16;
         if ciphertext_with_nonce.len() < min_len {
@@ -95,27 +127,31 @@ impl AeadEngine {
 
         let nonce_len = self.variant.nonce_len();
         let (nonce_bytes, ciphertext) = ciphertext_with_nonce.split_at(nonce_len);
+        let payload = Payload {
+            msg: ciphertext,
+            aad,
+        };
 
         match self.variant {
             AeadAlgorithmVariant::Aes256Gcm => {
                 let cipher = Aes256Gcm::new_from_slice(key)
                     .map_err(|e| format!("Invalid key length: {e}"))?;
                 cipher
-                    .decrypt(Nonce::from_slice(nonce_bytes), ciphertext)
+                    .decrypt(Nonce::from_slice(nonce_bytes), payload)
                     .map_err(|e| format!("Decryption failed: {e}"))
             }
             AeadAlgorithmVariant::ChaCha20Poly1305 => {
                 let cipher = ChaCha20Poly1305::new_from_slice(key)
                     .map_err(|e| format!("Invalid key length: {e}"))?;
                 cipher
-                    .decrypt(Nonce::from_slice(nonce_bytes), ciphertext)
+                    .decrypt(Nonce::from_slice(nonce_bytes), payload)
                     .map_err(|e| format!("Decryption failed: {e}"))
             }
             AeadAlgorithmVariant::XChaCha20Poly1305 => {
                 let cipher = XChaCha20Poly1305::new_from_slice(key)
                     .map_err(|e| format!("Invalid key length: {e}"))?;
                 cipher
-                    .decrypt(XNonce::from_slice(nonce_bytes), ciphertext)
+                    .decrypt(XNonce::from_slice(nonce_bytes), payload)
                     .map_err(|e| format!("Decryption failed: {e}"))
             }
         }
@@ -131,7 +167,20 @@ mod tests {
         let key = vec![0x42u8; 32];
         let plaintext = b"quantum-safe payload";
         let ct = engine.encrypt(&key, plaintext).unwrap();
-        assert_eq!(&ct[..variant.nonce_len()], &ct[..variant.nonce_len()]);
+        let ct2 = engine.encrypt(&key, plaintext).unwrap();
+        assert_ne!(&ct[..variant.nonce_len()], &ct2[..variant.nonce_len()]);
+        let authenticated = engine
+            .encrypt_with_aad(&key, plaintext, b"metadata")
+            .unwrap();
+        assert!(engine
+            .decrypt_with_aad(&key, &authenticated, b"changed")
+            .is_err());
+        assert_eq!(
+            engine
+                .decrypt_with_aad(&key, &authenticated, b"metadata")
+                .unwrap(),
+            plaintext
+        );
         let pt = engine.decrypt(&key, &ct).unwrap();
         assert_eq!(pt, plaintext);
     }

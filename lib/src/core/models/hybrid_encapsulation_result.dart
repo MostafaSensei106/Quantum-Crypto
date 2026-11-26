@@ -14,9 +14,13 @@ final class HybridEncapsulationResult {
   final Uint8List sharedSecret;
 
   /// Creates a new [HybridEncapsulationResult].
-  const HybridEncapsulationResult({
-    required this.mlKemCiphertext,
-    required this.x25519EphemeralPk,
-    required this.sharedSecret,
-  });
+  HybridEncapsulationResult({
+    required Uint8List mlKemCiphertext,
+    required Uint8List x25519EphemeralPk,
+    required Uint8List sharedSecret,
+  })  : mlKemCiphertext =
+            Uint8List.fromList(mlKemCiphertext).asUnmodifiableView(),
+        x25519EphemeralPk =
+            Uint8List.fromList(x25519EphemeralPk).asUnmodifiableView(),
+        sharedSecret = Uint8List.fromList(sharedSecret).asUnmodifiableView();
 }

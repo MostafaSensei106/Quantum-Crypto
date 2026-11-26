@@ -1,4 +1,4 @@
-//! HKDF key-derivation API — FFI boundary.
+//! HKDF key-derivation API  FFI boundary.
 //!
 //! [`hkdf_derive`] / [`hkdf_derive_multi`] are the historical SHA-256 entry
 //! points (kept for backward compatibility). New code should prefer the
@@ -77,9 +77,9 @@ fn expand(
 
 /// Derive `output_len` bytes from `shared_secret` with an explicit digest.
 ///
-/// * `salt` — optional salt; empty means "no salt" (not a zeroed salt).
-/// * `info` — context/application-specific separation string.
-/// * `output_len` — 1..=8160.
+/// * `salt`  optional salt; empty means "no salt" (not a zeroed salt).
+/// * `info`  context/application-specific separation string.
+/// * `output_len`  1..=8160.
 pub fn hkdf_derive_with_hash(
     shared_secret: Vec<u8>,
     salt: Vec<u8>,
@@ -87,12 +87,16 @@ pub fn hkdf_derive_with_hash(
     output_len: u32,
     hash: TargetHkdfHash,
 ) -> Result<Vec<u8>, String> {
+    let shared_secret = zeroize::Zeroizing::new(shared_secret);
+    crate::core::security::bounded(shared_secret.len(), crate::core::security::MAX_PLAINTEXT)?;
+    crate::core::security::bounded(salt.len(), crate::core::security::MAX_AAD)?;
     validate_ikm(&shared_secret)?;
     validate_output_len(output_len)?;
 
-    let mut okm = vec![0u8; output_len as usize];
+    crate::core::security::bounded(info.len(), crate::core::security::MAX_AAD)?;
+    let mut okm = zeroize::Zeroizing::new(vec![0u8; output_len as usize]);
     expand(hash, &shared_secret, &salt, &info, &mut okm)?;
-    Ok(okm)
+    Ok(std::mem::take(&mut *okm))
 }
 
 /// Derive one `key_length`-byte key per entry in `info_strings`, same digest.
@@ -103,20 +107,28 @@ pub fn hkdf_derive_multi_with_hash(
     key_length: u32,
     hash: TargetHkdfHash,
 ) -> Result<Vec<Vec<u8>>, String> {
+    let shared_secret = zeroize::Zeroizing::new(shared_secret);
+    crate::core::security::bounded(shared_secret.len(), crate::core::security::MAX_PLAINTEXT)?;
+    crate::core::security::bounded(salt.len(), crate::core::security::MAX_AAD)?;
     validate_ikm(&shared_secret)?;
     validate_output_len(key_length)?;
     if info_strings.is_empty() {
         return Err("At least one info string is required".to_string());
     }
 
-    info_strings
-        .iter()
-        .map(|info| {
-            let mut okm = vec![0u8; key_length as usize];
-            expand(hash, &shared_secret, &salt, info.as_bytes(), &mut okm)?;
-            Ok(okm)
-        })
-        .collect()
+    crate::core::security::bounded(info_strings.len(), 1024)?;
+    let mut total = 0usize;
+    let mut outputs = zeroize::Zeroizing::new(Vec::<Vec<u8>>::new());
+    for info in &info_strings {
+        total = total
+            .checked_add(info.len())
+            .ok_or("Info length overflow")?;
+        crate::core::security::bounded(total, crate::core::security::MAX_AAD)?;
+        let mut okm = zeroize::Zeroizing::new(vec![0u8; key_length as usize]);
+        expand(hash, &shared_secret, &salt, info.as_bytes(), &mut okm)?;
+        outputs.push(std::mem::take(&mut *okm));
+    }
+    Ok(std::mem::take(&mut *outputs))
 }
 
 /// Derive key material with HKDF-SHA256 (legacy default; see [`hkdf_derive_with_hash`]).

@@ -1,24 +1,26 @@
 [package]
 name = "quantum_crypto"
-version = "0.1.0"
+version = "0.0.3"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
 flutter_rust_bridge = "=2.13.0"
-pqcrypto-mldsa = "0.1.2"
+pqcrypto-mldsa = { version = "0.1.2", default-features = false, features = ["std"] }
 pqcrypto-mlkem = "0.1.1"
 pqcrypto-sphincsplus = "0.7"
 pqcrypto-traits = "0.3.5"
 zeroize = { version = "1.9.0", features = ["zeroize_derive"] }
 x25519-dalek = { version = "2.0", features = ["static_secrets"] }
+subtle = "2.6"
 hkdf = "0.12"
 sha2 = "0.10"
 sha3 = "0.10"
 rand_core = { version = "0.6", features = ["getrandom"] }
-aes-gcm = "0.10"
+aead = { version = "0.5", features = ["stream"] }
+aes-gcm = { version = "0.10", features = ["zeroize"] }
 chacha20poly1305 = "0.10"
 base64 = "0.22"
 
@@ -30,5 +32,8 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
 opt-level = 3
 lto = "thin"
 codegen-units = 1
-panic = "abort"
+panic = "unwind"
 strip = "symbols"
+
+[dev-dependencies]
+proptest = "1.12"

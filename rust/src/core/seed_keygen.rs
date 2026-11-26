@@ -22,6 +22,11 @@ impl SeedKeyDerivation {
         key_index: u32,
         output_len: usize,
     ) -> Result<Vec<u8>, String> {
+        crate::core::security::bounded(seed.len(), crate::core::security::MAX_AAD)?;
+        crate::core::security::bounded(purpose.len(), crate::core::security::MAX_AAD)?;
+        if purpose.is_empty() {
+            return Err("Purpose must not be empty".into());
+        }
         if seed.len() < 32 {
             return Err(format!(
                 "Seed must be at least 32 bytes, got {}",
@@ -40,10 +45,10 @@ impl SeedKeyDerivation {
         info.extend_from_slice(purpose.as_bytes());
         info.extend_from_slice(&key_index.to_be_bytes());
 
-        let mut okm = vec![0u8; output_len];
+        let mut okm = zeroize::Zeroizing::new(vec![0u8; output_len]);
         hkdf.expand(&info, &mut okm)
             .map_err(|_| "HKDF expansion failed".to_string())?;
-        Ok(okm)
+        Ok(std::mem::take(&mut *okm))
     }
 
     /// Derive a 32-byte X25519 private key from seed.
@@ -57,9 +62,11 @@ impl SeedKeyDerivation {
     }
 
     /// Generate a cryptographically secure random 32-byte master seed.
-    pub fn generate_seed() -> Vec<u8> {
-        let mut seed = vec![0u8; 32];
-        OsRng.fill_bytes(&mut seed);
-        seed
+    pub fn generate_seed() -> Result<Vec<u8>, String> {
+        let mut seed = zeroize::Zeroizing::new(vec![0u8; 32]);
+        OsRng
+            .try_fill_bytes(&mut seed)
+            .map_err(|_| "OS randomness unavailable")?;
+        Ok(std::mem::take(&mut *seed))
     }
 }

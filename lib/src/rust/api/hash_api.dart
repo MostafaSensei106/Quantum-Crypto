@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `eq`, `fmt`, `from`
 
 /// Compute the digest of `data` with `algorithm`.
 Future<Uint8List> hashData(
@@ -16,19 +16,19 @@ Future<Uint8List> hashData(
 
 /// Digest algorithm selection.
 enum TargetHashAlgorithm {
-  /// SHA-256 — 32-byte digest (default interop choice).
+  /// SHA-256  32-byte digest (default interop choice).
   sha256,
 
-  /// SHA-384 — 48-byte digest.
+  /// SHA-384  48-byte digest.
   sha384,
 
-  /// SHA-512 — 64-byte digest.
+  /// SHA-512  64-byte digest.
   sha512,
 
-  /// SHA3-256 — 32-byte digest (NIST FIPS 202).
+  /// SHA3-256  32-byte digest (NIST FIPS 202).
   sha3256,
 
-  /// SHA3-512 — 64-byte digest (NIST FIPS 202).
+  /// SHA3-512  64-byte digest (NIST FIPS 202).
   sha3512,
   ;
 }

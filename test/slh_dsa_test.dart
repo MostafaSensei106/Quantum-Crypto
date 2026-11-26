@@ -8,7 +8,7 @@ void main() {
     await QuantumCrypto.init();
   });
 
-  group('SLH-DSA Operations (FIPS 205, detached signatures)', () {
+  group('SPHINCS+ Operations (detached signatures)', () {
     final message =
         Uint8List.fromList(utf8.encode('Top Secret Quantum Message!'));
 

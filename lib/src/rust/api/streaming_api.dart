@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 /// Encrypt `plaintext` in chunks.
 ///
-/// * `chunk_size` — chunk size in bytes; defaults to 64 KiB when `None`.
+/// * `chunk_size`  chunk size in bytes; defaults to 64 KiB when `None`.
 Future<Uint8List> streamAeadEncrypt(
         {required TargetAeadAlgorithm algorithm,
         required List<int> key,

@@ -35,7 +35,7 @@ final
       plaintext: plaintext,
       chunkSize: chunkSize,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
@@ -47,7 +47,7 @@ final
       key: key,
       encryptedData: encryptedData,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   aead_rust_api.TargetAeadAlgorithm _mapAeadAlgorithm(AeadAlgorithm algo) {

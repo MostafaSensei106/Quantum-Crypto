@@ -11,10 +11,10 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 /// Run the full benchmark suite covering KEM, DSA, SLH-DSA, hybrid KEM,
 /// AEAD, and hashing.
 ///
-/// * `kem_iterations` — iterations for KEM / hybrid / hash benchmarks
-/// * `dsa_iterations` — iterations for DSA benchmarks (SLH-DSA signing is
+/// * `kem_iterations`  iterations for KEM / hybrid / hash benchmarks
+/// * `dsa_iterations`  iterations for DSA benchmarks (SLH-DSA signing is
 ///   clamped internally, see [`benchmark_slh_dsa_set`])
-/// * `aead_iterations` — iterations for AEAD benchmarks
+/// * `aead_iterations`  iterations for AEAD benchmarks
 Future<BenchmarkSuiteResult> runBenchmarkSuite(
         {required int kemIterations,
         required int dsaIterations,

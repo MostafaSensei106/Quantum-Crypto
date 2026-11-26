@@ -51,6 +51,7 @@ impl DsaStrategy for MlDsaStrategy {
     }
 
     fn sign(&self, message: &[u8], secret_key: &[u8]) -> Result<Vec<u8>, String> {
+        crate::core::security::bounded(message.len(), crate::core::security::MAX_PLAINTEXT)?;
         match self.variant {
             MlDsaVariant::MlDsa44 => {
                 let sk = mldsa44::SecretKey::from_bytes(secret_key)
@@ -74,6 +75,8 @@ impl DsaStrategy for MlDsaStrategy {
     }
 
     fn verify(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> Result<bool, String> {
+        crate::core::security::bounded(message.len(), crate::core::security::MAX_PLAINTEXT)?;
+        crate::core::security::bounded(signature.len(), crate::core::security::MAX_ENCODED)?;
         match self.variant {
             MlDsaVariant::MlDsa44 => {
                 let pk = mldsa44::PublicKey::from_bytes(public_key)
@@ -82,7 +85,10 @@ impl DsaStrategy for MlDsaStrategy {
                     .map_err(|_| "Invalid signature format for ML-DSA-44".to_string())?;
 
                 match mldsa44::open(&signed, &pk) {
-                    Ok(opened_msg) => Ok(opened_msg == message),
+                    Ok(opened_msg) => {
+                        let opened_msg = zeroize::Zeroizing::new(opened_msg);
+                        Ok(opened_msg.as_slice() == message)
+                    }
                     Err(_) => Ok(false),
                 }
             }
@@ -93,7 +99,10 @@ impl DsaStrategy for MlDsaStrategy {
                     .map_err(|_| "Invalid signature format for ML-DSA-65".to_string())?;
 
                 match mldsa65::open(&signed, &pk) {
-                    Ok(opened_msg) => Ok(opened_msg == message),
+                    Ok(opened_msg) => {
+                        let opened_msg = zeroize::Zeroizing::new(opened_msg);
+                        Ok(opened_msg.as_slice() == message)
+                    }
                     Err(_) => Ok(false),
                 }
             }
@@ -104,7 +113,10 @@ impl DsaStrategy for MlDsaStrategy {
                     .map_err(|_| "Invalid signature format for ML-DSA-87".to_string())?;
 
                 match mldsa87::open(&signed, &pk) {
-                    Ok(opened_msg) => Ok(opened_msg == message),
+                    Ok(opened_msg) => {
+                        let opened_msg = zeroize::Zeroizing::new(opened_msg);
+                        Ok(opened_msg.as_slice() == message)
+                    }
                     Err(_) => Ok(false),
                 }
             }

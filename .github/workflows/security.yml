@@ -1,0 +1,122 @@
+name: Security and platform verification
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 6 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_REVISION: ae9b586f34a8443573f82ef57c3bf914a908cbf7
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+          - os: macos-14
+            platform: macos
+          - os: windows-2022
+            platform: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libssl-dev python3
+      - name: Install pinned Flutter SDK
+        shell: bash
+        run: |
+          git init "$RUNNER_TEMP/flutter"
+          git -C "$RUNNER_TEMP/flutter" remote add origin https://github.com/flutter/flutter.git
+          git -C "$RUNNER_TEMP/flutter" fetch --depth 1 origin "$FLUTTER_REVISION"
+          git -C "$RUNNER_TEMP/flutter" checkout --detach FETCH_HEAD
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get
+      - run: python3 tools/check_dependency_policy.py
+        if: runner.os != 'Windows'
+      - run: cargo test --locked --manifest-path rust/Cargo.toml
+      - run: cargo build --locked --release --manifest-path rust/Cargo.toml
+      - run: flutter analyze --no-pub
+      - name: Flutter correctness tests
+        run: flutter test --no-pub test/native_keys_test.dart test/hybrid_kem_test.dart test/hash_aead_kdf_test.dart test/ml_dsa_test.dart test/ml_kem_test.dart test/slh_dsa_test.dart
+      - name: Build example plugin target
+        working-directory: example
+        run: flutter build ${{ matrix.platform }} --debug
+      - name: Verify generated bindings
+        if: runner.os == 'Linux'
+        run: |
+          cargo install flutter_rust_bridge_codegen --version 2.13.0 --locked
+          flutter_rust_bridge_codegen generate
+          git diff --exit-code -- lib/src/rust rust/src/frb_generated.rs
+
+  mobile:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: android
+          - os: macos-14
+            platform: ios
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install pinned Flutter SDK
+        shell: bash
+        run: |
+          git init "$RUNNER_TEMP/flutter"
+          git -C "$RUNNER_TEMP/flutter" remote add origin https://github.com/flutter/flutter.git
+          git -C "$RUNNER_TEMP/flutter" fetch --depth 1 origin "$FLUTTER_REVISION"
+          git -C "$RUNNER_TEMP/flutter" checkout --detach FETCH_HEAD
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get
+        working-directory: example
+      - name: Build Android
+        if: matrix.platform == 'android'
+        working-directory: example
+        run: flutter build apk --debug
+      - name: Build iOS simulator
+        if: matrix.platform == 'ios'
+        working-directory: example
+        run: flutter build ios --simulator --debug
+
+  dependency-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: cargo install cargo-audit --version 0.23.0 --locked
+      # Deliberately fails while upstream vulnerable versions remain in Cargo.lock.
+      # See doc/security-verification.md; no ignored advisories or continue-on-error.
+      - run: cargo audit --file rust/Cargo.lock
+      - run: cargo audit --file rust/fuzz/Cargo.lock
+
+  fuzz:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install nightly --profile minimal
+      - run: cargo install cargo-fuzz --version 0.13.2 --locked
+      - name: Parser fuzz smoke test (not a sustained campaign)
+        working-directory: rust
+        run: cargo +nightly fuzz run parsers -- -max_total_time=60 -max_len=8192

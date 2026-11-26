@@ -1,253 +1,229 @@
-use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
-use chacha20poly1305::{ChaCha20Poly1305, XChaCha20Poly1305, XNonce};
+//! Version 2 in-memory chunked AEAD using RustCrypto STREAM-BE32.
+//! Header: version:u8 || algorithm:u8 || chunk_size:u32be || plaintext_len:u32be
+//! || salt:[u8;32] || STREAM nonce prefix (AEAD nonce length minus five).
+//! The entire header is AAD for every segment. Empty input has a final tag.
+use crate::core::{aead::AeadAlgorithmVariant, security::*};
+use aead::{
+    stream::{DecryptorBE32, EncryptorBE32},
+    KeyInit, Payload,
+};
+use aes_gcm::Aes256Gcm;
+use chacha20poly1305::{ChaCha20Poly1305, XChaCha20Poly1305};
+use hkdf::Hkdf;
+use rand_core::{OsRng, RngCore};
+use sha2::Sha256;
+use zeroize::Zeroizing;
 
-use crate::core::aead::AeadAlgorithmVariant;
+const VERSION: u8 = 2;
+const FIXED_HEADER: usize = 42;
 
-const DEFAULT_CHUNK_SIZE: usize = 64 * 1024; // 64 KB
-const STREAM_VERSION: u8 = 1;
-
-/// On-wire stream header: version (1B) || chunk_size (4B) || total_chunks (4B) || algorithm (1B).
-pub struct StreamHeader {
-    pub version: u8,
-    pub chunk_size: u32,
-    pub total_chunks: u32,
-    pub algorithm: u8,
-}
-
-impl StreamHeader {
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(Self::byte_len());
-        bytes.push(self.version);
-        bytes.extend_from_slice(&self.chunk_size.to_be_bytes());
-        bytes.extend_from_slice(&self.total_chunks.to_be_bytes());
-        bytes.push(self.algorithm);
-        bytes
-    }
-
-    pub fn from_bytes(data: &[u8]) -> Result<Self, String> {
-        if data.len() < Self::byte_len() {
-            return Err("Stream header too short".to_string());
-        }
-        let version = data[0];
-        if version != STREAM_VERSION {
-            return Err(format!("Unsupported stream version: {version}"));
-        }
-        let chunk_size = u32::from_be_bytes([data[1], data[2], data[3], data[4]]);
-        let total_chunks = u32::from_be_bytes([data[5], data[6], data[7], data[8]]);
-        let algorithm = data[9];
-        Ok(Self {
-            version,
-            chunk_size,
-            total_chunks,
-            algorithm,
-        })
-    }
-
-    pub fn byte_len() -> usize {
-        10
-    }
-}
-
-fn algorithm_to_byte(variant: AeadAlgorithmVariant) -> u8 {
-    match variant {
+fn id(v: AeadAlgorithmVariant) -> u8 {
+    match v {
         AeadAlgorithmVariant::Aes256Gcm => 0,
         AeadAlgorithmVariant::ChaCha20Poly1305 => 1,
         AeadAlgorithmVariant::XChaCha20Poly1305 => 2,
     }
 }
-
-fn byte_to_algorithm(byte: u8) -> Result<AeadAlgorithmVariant, String> {
-    match byte {
+fn variant(n: u8) -> Result<AeadAlgorithmVariant, String> {
+    match n {
         0 => Ok(AeadAlgorithmVariant::Aes256Gcm),
         1 => Ok(AeadAlgorithmVariant::ChaCha20Poly1305),
         2 => Ok(AeadAlgorithmVariant::XChaCha20Poly1305),
-        _ => Err(format!("Unknown algorithm byte: {byte}")),
+        _ => Err("Unknown stream algorithm".into()),
     }
 }
-
-/// Counter-based nonce for a chunk: zero-padded with the chunk index in the
-/// last 4 bytes (big-endian). Length matches the cipher (12 or 24 bytes).
-fn chunk_nonce(variant: AeadAlgorithmVariant, chunk_index: u32) -> Vec<u8> {
-    let mut nonce = vec![0u8; variant.nonce_len()];
-    let start = nonce.len() - 4;
-    nonce[start..].copy_from_slice(&chunk_index.to_be_bytes());
-    nonce
-}
-
-fn encrypt_chunk(
-    variant: AeadAlgorithmVariant,
-    key: &[u8],
-    nonce_bytes: &[u8],
-    chunk: &[u8],
-    chunk_index: usize,
-) -> Result<Vec<u8>, String> {
-    let map_err = |e: aes_gcm::Error| format!("Chunk {chunk_index} encryption failed: {e}");
-    match variant {
-        AeadAlgorithmVariant::Aes256Gcm => {
-            let cipher = Aes256Gcm::new_from_slice(key).map_err(|e| format!("Invalid key: {e}"))?;
-            cipher
-                .encrypt(Nonce::from_slice(nonce_bytes), chunk)
-                .map_err(map_err)
-        }
-        AeadAlgorithmVariant::ChaCha20Poly1305 => {
-            let cipher =
-                ChaCha20Poly1305::new_from_slice(key).map_err(|e| format!("Invalid key: {e}"))?;
-            cipher
-                .encrypt(Nonce::from_slice(nonce_bytes), chunk)
-                .map_err(map_err)
-        }
-        AeadAlgorithmVariant::XChaCha20Poly1305 => {
-            let cipher =
-                XChaCha20Poly1305::new_from_slice(key).map_err(|e| format!("Invalid key: {e}"))?;
-            cipher
-                .encrypt(XNonce::from_slice(nonce_bytes), chunk)
-                .map_err(map_err)
-        }
-    }
-}
-
-fn decrypt_chunk(
-    variant: AeadAlgorithmVariant,
-    key: &[u8],
-    nonce_bytes: &[u8],
-    encrypted_chunk: &[u8],
-    chunk_index: u32,
-) -> Result<Vec<u8>, String> {
-    let map_err = |e: aes_gcm::Error| format!("Chunk {chunk_index} decryption failed: {e}");
-    match variant {
-        AeadAlgorithmVariant::Aes256Gcm => {
-            let cipher = Aes256Gcm::new_from_slice(key).map_err(|e| format!("Invalid key: {e}"))?;
-            cipher
-                .decrypt(Nonce::from_slice(nonce_bytes), encrypted_chunk)
-                .map_err(map_err)
-        }
-        AeadAlgorithmVariant::ChaCha20Poly1305 => {
-            let cipher =
-                ChaCha20Poly1305::new_from_slice(key).map_err(|e| format!("Invalid key: {e}"))?;
-            cipher
-                .decrypt(Nonce::from_slice(nonce_bytes), encrypted_chunk)
-                .map_err(map_err)
-        }
-        AeadAlgorithmVariant::XChaCha20Poly1305 => {
-            let cipher =
-                XChaCha20Poly1305::new_from_slice(key).map_err(|e| format!("Invalid key: {e}"))?;
-            cipher
-                .decrypt(XNonce::from_slice(nonce_bytes), encrypted_chunk)
-                .map_err(map_err)
-        }
-    }
-}
-
-fn check_key(key: &[u8]) -> Result<(), String> {
+fn derive(key: &[u8], salt: &[u8], algorithm: u8) -> Result<Zeroizing<[u8; 32]>, String> {
     if key.len() != 32 {
-        return Err(format!("Key must be 32 bytes, got {}", key.len()));
+        return Err("Key must be 32 bytes".into());
     }
-    Ok(())
+    let mut out = Zeroizing::new([0; 32]);
+    let mut info = b"Quantum-Crypto/STREAM-BE32/v2/".to_vec();
+    info.push(algorithm);
+    Hkdf::<Sha256>::new(Some(salt), key)
+        .expand(&info, out.as_mut())
+        .map_err(|_| "Stream KDF failed")?;
+    Ok(out)
+}
+fn sizes(chunk: usize, len: usize, prefix: usize) -> Result<(usize, usize), String> {
+    if chunk == 0 || chunk > MAX_CHUNK {
+        return Err("Chunk size must be 1..1048576".into());
+    }
+    bounded(len, MAX_PLAINTEXT)?;
+    let count = len.div_ceil(chunk).max(1);
+    let size = count
+        .checked_mul(16)
+        .and_then(|v| v.checked_add(len))
+        .and_then(|v| v.checked_add(FIXED_HEADER + prefix))
+        .ok_or("Stream size overflow")?;
+    bounded(size, MAX_ENCODED)?;
+    Ok((count, size))
 }
 
 pub fn stream_encrypt(
     key: &[u8],
     plaintext: &[u8],
-    variant: AeadAlgorithmVariant,
+    algorithm: AeadAlgorithmVariant,
     chunk_size: Option<usize>,
 ) -> Result<Vec<u8>, String> {
-    check_key(key)?;
-
-    let chunk_size = chunk_size.unwrap_or(DEFAULT_CHUNK_SIZE);
-    if chunk_size == 0 {
-        return Err("Chunk size must be > 0".to_string());
+    let chunk = chunk_size.unwrap_or(64 * 1024);
+    let prefix_len = algorithm.nonce_len() - 5;
+    let (count, size) = sizes(chunk, plaintext.len(), prefix_len)?;
+    let mut header = vec![VERSION, id(algorithm)];
+    header.extend_from_slice(
+        &u32::try_from(chunk)
+            .map_err(|_| "Chunk too large")?
+            .to_be_bytes(),
+    );
+    header.extend_from_slice(
+        &u32::try_from(plaintext.len())
+            .map_err(|_| "Stream too large")?
+            .to_be_bytes(),
+    );
+    let mut randomness = vec![0; 32 + prefix_len];
+    OsRng
+        .try_fill_bytes(&mut randomness)
+        .map_err(|_| "OS randomness unavailable")?;
+    header.extend_from_slice(&randomness);
+    let derived = derive(key, &header[10..42], id(algorithm))?;
+    let mut output = Vec::new();
+    output
+        .try_reserve_exact(size)
+        .map_err(|_| "Allocation failed")?;
+    output.extend_from_slice(&header);
+    macro_rules! encrypt {
+        ($cipher:ty) => {{
+            let cipher = <$cipher>::new_from_slice(derived.as_ref()).map_err(|_| "Invalid key")?;
+            let mut stream = EncryptorBE32::from_aead(cipher, header[FIXED_HEADER..].into());
+            for i in 0..count - 1 {
+                output.extend_from_slice(
+                    &stream
+                        .encrypt_next(Payload {
+                            msg: &plaintext[i * chunk..(i + 1) * chunk],
+                            aad: &header,
+                        })
+                        .map_err(|_| "Stream encryption failed")?,
+                );
+            }
+            output.extend_from_slice(
+                &stream
+                    .encrypt_last(Payload {
+                        msg: &plaintext[(count - 1) * chunk..],
+                        aad: &header,
+                    })
+                    .map_err(|_| "Stream encryption failed")?,
+            );
+        }};
     }
-
-    let chunks: Vec<&[u8]> = plaintext.chunks(chunk_size).collect();
-    let total_chunks = chunks.len() as u32;
-
-    let header = StreamHeader {
-        version: STREAM_VERSION,
-        chunk_size: chunk_size as u32,
-        total_chunks,
-        algorithm: algorithm_to_byte(variant),
-    };
-
-    // Estimate output size: header + (nonce + chunk + tag) * num_chunks.
-    let nonce_len = variant.nonce_len();
-    let overhead_per_chunk = nonce_len + 16; // nonce + AEAD tag
-    let estimated_size = StreamHeader::byte_len()
-        + chunks
-            .iter()
-            .map(|c| overhead_per_chunk + c.len())
-            .sum::<usize>();
-    let mut output = Vec::with_capacity(estimated_size);
-    output.extend_from_slice(&header.to_bytes());
-
-    for (i, chunk) in chunks.iter().enumerate() {
-        let nonce_bytes = chunk_nonce(variant, i as u32);
-        let encrypted = encrypt_chunk(variant, key, &nonce_bytes, chunk, i)?;
-        // Write nonce + encrypted data (which includes the tag).
-        output.extend_from_slice(&nonce_bytes);
-        output.extend_from_slice(&encrypted);
+    match algorithm {
+        AeadAlgorithmVariant::Aes256Gcm => encrypt!(Aes256Gcm),
+        AeadAlgorithmVariant::ChaCha20Poly1305 => encrypt!(ChaCha20Poly1305),
+        AeadAlgorithmVariant::XChaCha20Poly1305 => encrypt!(XChaCha20Poly1305),
     }
-
     Ok(output)
 }
 
 pub fn stream_decrypt(key: &[u8], data: &[u8]) -> Result<Vec<u8>, String> {
-    check_key(key)?;
-    if data.len() < StreamHeader::byte_len() {
-        return Err("Data too short for stream header".to_string());
+    bounded(data.len(), MAX_ENCODED)?;
+    if data.len() < FIXED_HEADER || data[0] != VERSION {
+        return Err("Unsupported or truncated stream (v2 required)".into());
     }
-
-    let header = StreamHeader::from_bytes(&data[..StreamHeader::byte_len()])?;
-    let variant = byte_to_algorithm(header.algorithm)?;
-    let nonce_len = variant.nonce_len();
-    let mut offset = StreamHeader::byte_len();
-    let mut plaintext = Vec::new();
-
-    for i in 0..header.total_chunks {
-        if offset + nonce_len > data.len() {
-            return Err(format!("Unexpected end of data at chunk {i}"));
-        }
-
-        let nonce_bytes = &data[offset..offset + nonce_len];
-        offset += nonce_len;
-
-        // Determine encrypted chunk size: every chunk but the last carries a
-        // full plaintext chunk plus the 16-byte AEAD tag.
-        let encrypted_chunk_size = if i == header.total_chunks - 1 {
-            data.len() - offset
-        } else {
-            header.chunk_size as usize + 16
-        };
-
-        if offset + encrypted_chunk_size > data.len() {
-            return Err(format!("Chunk {i} extends beyond data"));
-        }
-
-        let encrypted_chunk = &data[offset..offset + encrypted_chunk_size];
-        offset += encrypted_chunk_size;
-
-        let decrypted = decrypt_chunk(variant, key, nonce_bytes, encrypted_chunk, i)?;
-        plaintext.extend_from_slice(&decrypted);
+    let algorithm = variant(data[1])?;
+    let chunk = u32::from_be_bytes(data[2..6].try_into().map_err(|_| "Invalid header")?) as usize;
+    let len = u32::from_be_bytes(data[6..10].try_into().map_err(|_| "Invalid header")?) as usize;
+    let prefix_len = algorithm.nonce_len() - 5;
+    let (count, size) = sizes(chunk, len, prefix_len)?;
+    if data.len() != size {
+        return Err("Truncated stream or trailing data".into());
     }
-
-    Ok(plaintext)
+    let header = &data[..FIXED_HEADER + prefix_len];
+    let derived = derive(key, &header[10..42], data[1])?;
+    let mut plaintext = Zeroizing::new(Vec::new());
+    plaintext
+        .try_reserve_exact(len)
+        .map_err(|_| "Allocation failed")?;
+    macro_rules! decrypt {
+        ($cipher:ty) => {{
+            let cipher = <$cipher>::new_from_slice(derived.as_ref()).map_err(|_| "Invalid key")?;
+            let mut stream = DecryptorBE32::from_aead(cipher, header[FIXED_HEADER..].into());
+            let mut offset = header.len();
+            for _ in 0..count - 1 {
+                let end = offset + chunk + 16;
+                let block = Zeroizing::new(
+                    stream
+                        .decrypt_next(Payload {
+                            msg: &data[offset..end],
+                            aad: header,
+                        })
+                        .map_err(|_| "Stream authentication failed")?,
+                );
+                plaintext.extend_from_slice(&block);
+                offset = end;
+            }
+            let block = Zeroizing::new(
+                stream
+                    .decrypt_last(Payload {
+                        msg: &data[offset..],
+                        aad: header,
+                    })
+                    .map_err(|_| "Stream authentication failed")?,
+            );
+            plaintext.extend_from_slice(&block);
+        }};
+    }
+    match algorithm {
+        AeadAlgorithmVariant::Aes256Gcm => decrypt!(Aes256Gcm),
+        AeadAlgorithmVariant::ChaCha20Poly1305 => decrypt!(ChaCha20Poly1305),
+        AeadAlgorithmVariant::XChaCha20Poly1305 => decrypt!(XChaCha20Poly1305),
+    }
+    Ok(std::mem::take(&mut *plaintext))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
-    fn roundtrip_all_variants() {
-        let key = vec![0x77u8; 32];
-        let data: Vec<u8> = (0..200_000u32).map(|i| (i % 251) as u8).collect();
-        for variant in [
+    fn stream_security() {
+        for v in [
             AeadAlgorithmVariant::Aes256Gcm,
             AeadAlgorithmVariant::ChaCha20Poly1305,
             AeadAlgorithmVariant::XChaCha20Poly1305,
         ] {
-            let enc = stream_encrypt(&key, &data, variant, Some(32_768)).unwrap();
-            let dec = stream_decrypt(&key, &enc).unwrap();
-            assert_eq!(dec, data);
+            for data in [vec![], vec![1], vec![2; 64], vec![3; 65], vec![4; 200]] {
+                let key = [7; 32];
+                let ct = stream_encrypt(&key, &data, v, Some(64)).unwrap();
+                assert_eq!(stream_decrypt(&key, &ct).unwrap(), data);
+                assert_ne!(ct, stream_encrypt(&key, &data, v, Some(64)).unwrap());
+                assert!(stream_decrypt(&[8; 32], &ct).is_err());
+                for i in 0..ct.len() {
+                    let mut bad = ct.clone();
+                    bad[i] ^= 1;
+                    assert!(stream_decrypt(&key, &bad).is_err(), "byte {i}");
+                }
+                for n in 0..ct.len() {
+                    assert!(stream_decrypt(&key, &ct[..n]).is_err());
+                }
+                let mut extra = ct.clone();
+                extra.push(0);
+                assert!(stream_decrypt(&key, &extra).is_err());
+                if data.len() > 128 {
+                    let h = FIXED_HEADER + v.nonce_len() - 5;
+                    let mut swapped = ct.clone();
+                    for i in 0..80 {
+                        swapped.swap(h + i, h + 80 + i);
+                    }
+                    assert!(stream_decrypt(&key, &swapped).is_err());
+                }
+            }
+        }
+    }
+    #[test]
+    fn bounds_and_legacy() {
+        assert!(stream_decrypt(&[0; 32], &[1; 100]).is_err());
+        for chunk in [0, MAX_CHUNK + 1, usize::MAX] {
+            assert!(
+                stream_encrypt(&[0; 32], b"", AeadAlgorithmVariant::Aes256Gcm, Some(chunk))
+                    .is_err()
+            );
         }
     }
 }

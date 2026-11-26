@@ -1,7 +1,8 @@
-//! Hybrid KEM (X25519 + ML-KEM) API — FFI boundary.
+//! Hybrid KEM (X25519 + ML-KEM) API  FFI boundary.
 //!
-//! Defense in depth: the shared secret is `HKDF-SHA256(ML-KEM-ss || X25519-ss)`,
-//! so the exchange stays safe if *either* component is broken.
+//! Experimental, unaudited composition. No forward-secrecy guarantee.
+//! Construction: the shared secret is `HKDF-SHA256(ML-KEM-ss || X25519-ss)`,
+//! with a versioned context binding both public keys and ciphertexts.
 
 use crate::core::hybrid_kem::{
     HybridEncapsulationData, HybridKemEngine, HybridKemVariant, HybridKeyPairData,
@@ -10,11 +11,11 @@ use crate::core::hybrid_kem::{
 /// Hybrid KEM variant.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TargetHybridKemAlgorithm {
-    /// ML-KEM-512 + X25519 — NIST level 1 + classical.
+    /// ML-KEM-512 + X25519  NIST level 1 + classical.
     MlKem512X25519,
-    /// ML-KEM-768 + X25519 — NIST level 3 + classical (recommended default).
+    /// ML-KEM-768 + X25519  NIST level 3 + classical (recommended default).
     MlKem768X25519,
-    /// ML-KEM-1024 + X25519 — NIST level 5 + classical.
+    /// ML-KEM-1024 + X25519  NIST level 5 + classical.
     MlKem1024X25519,
 }
 
@@ -99,11 +100,17 @@ pub fn hybrid_kem_decapsulate(
     x25519_ephemeral_pk: Vec<u8>,
     mlkem_secret_key: Vec<u8>,
     x25519_secret_key: Vec<u8>,
+    mlkem_public_key: Vec<u8>,
+    x25519_public_key: Vec<u8>,
 ) -> Result<Vec<u8>, String> {
+    let mlkem_secret_key = zeroize::Zeroizing::new(mlkem_secret_key);
+    let x25519_secret_key = zeroize::Zeroizing::new(x25519_secret_key);
     HybridKemEngine::new(algorithm.into()).decapsulate(
         &mlkem_ciphertext,
         &x25519_ephemeral_pk,
         &mlkem_secret_key,
         &x25519_secret_key,
+        &mlkem_public_key,
+        &x25519_public_key,
     )
 }

@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `eq`, `fmt`, `from`, `from`, `from`
 
 /// Generate an ML-KEM key pair for `algorithm`.
 Future<KeyPairDto> generateKemKeypair(
@@ -74,13 +74,13 @@ class KeyPairDto {
 
 /// ML-KEM parameter set (FIPS 203).
 enum TargetKemAlgorithm {
-  /// ML-KEM-512 — NIST security level 1.
+  /// ML-KEM-512  NIST security level 1.
   mlKem512,
 
-  /// ML-KEM-768 — NIST security level 3 (recommended default).
+  /// ML-KEM-768  NIST security level 3 (recommended default).
   mlKem768,
 
-  /// ML-KEM-1024 — NIST security level 5.
+  /// ML-KEM-1024  NIST security level 5.
   mlKem1024,
   ;
 }

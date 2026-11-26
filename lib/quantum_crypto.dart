@@ -34,3 +34,5 @@ export 'src/core/models/benchmark_result.dart';
 
 // Facade
 export 'src/crypto.dart';
+
+export 'src/native/native_keys.dart';

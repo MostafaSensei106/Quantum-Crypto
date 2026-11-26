@@ -7,11 +7,13 @@ abstract interface class AeadService {
     required AeadAlgorithm algorithm,
     required Uint8List key,
     required Uint8List plaintext,
+    Uint8List? associatedData,
   });
 
   Future<Uint8List> decrypt({
     required AeadAlgorithm algorithm,
     required Uint8List key,
     required Uint8List ciphertextWithNonce,
+    Uint8List? associatedData,
   });
 }

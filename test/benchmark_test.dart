@@ -26,11 +26,17 @@ class BenchmarkResult {
 
 class BenchmarkRunner {
   final List<BenchmarkResult> results = [];
-  final int warmupIterations = 100;
-  final int runIterations = 1000;
+  final int warmupIterations =
+      const int.fromEnvironment('BENCHMARK_WARMUP', defaultValue: 100);
+  final int runIterations =
+      const int.fromEnvironment('BENCHMARK_ITERATIONS', defaultValue: 1000);
 
   Future<void> measure(
       String name, String step, Future<void> Function() operation) async {
+    if (warmupIterations < 0 || runIterations < 1) {
+      throw ArgumentError(
+          "Benchmark iterations must be positive; warmup must be nonnegative");
+    }
     // Warm-up Phase
     for (int i = 0; i < warmupIterations; i++) {
       await operation();
@@ -208,6 +214,8 @@ Future<void> runHybridKemBenchmarks(
       algorithm: algo,
       mlKemCiphertext: encapsulation.mlKemCiphertext,
       x25519EphemeralPk: encapsulation.x25519EphemeralPk,
+      mlKemPublicKey: keyPair.mlKemPublicKey,
+      x25519PublicKey: keyPair.x25519PublicKey,
       mlKemSecretKey: keyPair.mlKemSecretKey,
       x25519SecretKey: keyPair.x25519SecretKey,
     );
@@ -224,6 +232,8 @@ Future<void> runHybridKemBenchmarks(
       algorithm: algo,
       mlKemCiphertext: enc.mlKemCiphertext,
       x25519EphemeralPk: enc.x25519EphemeralPk,
+      mlKemPublicKey: kp.mlKemPublicKey,
+      x25519PublicKey: kp.x25519PublicKey,
       mlKemSecretKey: kp.mlKemSecretKey,
       x25519SecretKey: kp.x25519SecretKey,
     );
@@ -329,7 +339,7 @@ Future<void> runDataProcessingBenchmarks(BenchmarkRunner runner) async {
     masterSeed = await QuantumCrypto.seed.generateSeed();
   });
 
-  await runner.measure('Deterministic Key', 'Derive (Kem)', () async {
+  await runner.measure('HKDF Seed Bytes', 'Derive', () async {
     await QuantumCrypto.seed
         .deriveKey(seed: masterSeed, purpose: "ml-kem", keyIndex: 0);
   });
@@ -344,19 +354,22 @@ Future<void> runPipelineBenchmarks(BenchmarkRunner runner) async {
 
   late dynamic package;
 
-  await runner.measure('Sign-then-Encrypt Pipeline', 'EncryptAndSign',
+  await runner.measure('Encrypt-then-Sign Pipeline', 'EncryptAndSign',
       () async {
     package = await QuantumCrypto.messaging.encryptAndSign(
       message: message,
+      senderDsaPublicKey: senderDsa.publicKey,
       senderDsaSecretKey: senderDsa.secretKey,
       recipientMlKemPublicKey: recipientHybrid.mlKemPublicKey,
       recipientX25519PublicKey: recipientHybrid.x25519PublicKey,
     );
   });
 
-  await runner.measure('Sign-then-Encrypt Pipeline', 'VerifyAndDecr', () async {
+  await runner.measure('Encrypt-then-Sign Pipeline', 'VerifyAndDecr', () async {
     await QuantumCrypto.messaging.verifyAndDecrypt(
       package: package,
+      recipientMlKemPublicKey: recipientHybrid.mlKemPublicKey,
+      recipientX25519PublicKey: recipientHybrid.x25519PublicKey,
       recipientMlKemSecretKey: recipientHybrid.mlKemSecretKey,
       recipientX25519SecretKey: recipientHybrid.x25519SecretKey,
       senderDsaPublicKey: senderDsa.publicKey,

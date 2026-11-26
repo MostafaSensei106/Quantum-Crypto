@@ -21,7 +21,7 @@ final class SeedServiceImpl implements SeedService {
   @override
   Future<Uint8List> generateSeed() async {
     final result = await rust_api.generateMasterSeed();
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
@@ -37,7 +37,7 @@ final class SeedServiceImpl implements SeedService {
       keyIndex: keyIndex,
       outputLen: outputLength,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
@@ -49,7 +49,7 @@ final class SeedServiceImpl implements SeedService {
       seed: seed,
       keyIndex: keyIndex,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
@@ -61,6 +61,6 @@ final class SeedServiceImpl implements SeedService {
       seed: seed,
       keyIndex: keyIndex,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 }

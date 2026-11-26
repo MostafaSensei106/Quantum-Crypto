@@ -1,4 +1,4 @@
-//! ML-KEM (FIPS 203) key-encapsulation API — FFI boundary.
+//! ML-KEM (FIPS 203) key-encapsulation API  FFI boundary.
 //!
 //! All functions take owned values (`Vec<u8>`) because `flutter_rust_bridge`
 //! codegen requires owned types at the boundary; borrowing happens inside the
@@ -10,11 +10,11 @@ use crate::factory::kem_factory::{KemAlgorithm, KemFactory};
 /// ML-KEM parameter set (FIPS 203).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TargetKemAlgorithm {
-    /// ML-KEM-512 — NIST security level 1.
+    /// ML-KEM-512  NIST security level 1.
     MlKem512,
-    /// ML-KEM-768 — NIST security level 3 (recommended default).
+    /// ML-KEM-768  NIST security level 3 (recommended default).
     MlKem768,
-    /// ML-KEM-1024 — NIST security level 5.
+    /// ML-KEM-1024  NIST security level 5.
     MlKem1024,
 }
 
@@ -86,5 +86,6 @@ pub fn kem_decapsulate(
     ciphertext: Vec<u8>,
     secret_key: Vec<u8>,
 ) -> Result<Vec<u8>, String> {
+    let secret_key = zeroize::Zeroizing::new(secret_key);
     KemFactory::create_strategy(algorithm.into()).decapsulate(&ciphertext, &secret_key)
 }

@@ -4,6 +4,8 @@ pub mod hash;
 pub mod hybrid_kem;
 pub mod mldsa;
 pub mod mlkem;
+pub mod mlkem_validation;
+pub mod security;
 pub mod seed_keygen;
 pub mod slhdsa;
 pub mod streaming;

@@ -14,6 +14,28 @@ Future<void> main() async {
   await QuantumCrypto.init();
   log('[INFO] Initialization completed.\n');
 
+  // Native signing: the private key never crosses into Dart.
+  final nativeKey = await QuantumCrypto.nativeKeys.generateDsa(
+    algorithm: DsaAlgorithm.mlDsa65,
+    exportable: false,
+  );
+  try {
+    final message = Uint8List.fromList(utf8.encode('Native key example'));
+    final signature = await nativeKey.sign(message);
+    final publicKey = await nativeKey.publicKey();
+    final valid = await QuantumCrypto.dsa.verify(
+      algorithm: DsaAlgorithm.mlDsa65,
+      message: message,
+      signature: signature,
+      publicKey: publicKey,
+    );
+    log('[NATIVE] Signature verified: $valid');
+  } finally {
+    await nativeKey.dispose();
+  }
+
+  // The remaining sections demonstrate the explicit byte-key compatibility APIs.
+  // Their secrets reside in Dart and have no secure-erasure guarantee.
   // =========================================================
   // 1. Pure ML-KEM (Key Encapsulation Mechanism)
   // =========================================================
@@ -71,9 +93,9 @@ Future<void> main() async {
   log('[DSA] Signature Verification: ${dsaValid ? "✅ VALID" : "❌ INVALID"}\n');
 
   // =========================================================
-  // 3. SLH-DSA (FIPS 205 Stateless Hash-Based Signatures) [NEW in 0.0.2]
+  // 3. SPHINCS+ (historical SLH-DSA API names) [NEW in 0.0.2]
   // =========================================================
-  log('--- 3. SLH-DSA (Hash-Based Signatures, FIPS 205) ---');
+  log('--- 3. SPHINCS+ (final FIPS 205 equivalence unverified) ---');
   final slhAlgo = SlhDsaAlgorithm.slhDsaSha2_128f; // NIST Security Level 1
   log('[SLH-DSA] Using Algorithm: ${slhAlgo.name}');
   log('[SLH-DSA] Note: detached signatures (message NOT embedded).');
@@ -123,6 +145,8 @@ Future<void> main() async {
     algorithm: hybridAlgo,
     mlKemCiphertext: hybridEncapsulation.mlKemCiphertext,
     x25519EphemeralPk: hybridEncapsulation.x25519EphemeralPk,
+    mlKemPublicKey: hybridKeyPair.mlKemPublicKey,
+    x25519PublicKey: hybridKeyPair.x25519PublicKey,
     mlKemSecretKey: hybridKeyPair.mlKemSecretKey,
     x25519SecretKey: hybridKeyPair.x25519SecretKey,
   );
@@ -142,7 +166,11 @@ Future<void> main() async {
   final aeadAlgo = AeadAlgorithm.aes256Gcm;
   log('[AEAD] Using Algorithm: ${aeadAlgo.name}');
 
-  final symmetricKey = hybridEncapsulation.sharedSecret; // 32-byte key
+  final symmetricKey = await QuantumCrypto.kdf.derive(
+    sharedSecret: hybridEncapsulation.sharedSecret,
+    info: Uint8List.fromList(utf8.encode('example/aes256gcm/v2')),
+    outputLength: 32,
+  );
   final payload = Uint8List.fromList(utf8.encode('Secret Data'));
 
   final ciphertextWithNonce = await QuantumCrypto.aead.encrypt(
@@ -162,12 +190,17 @@ Future<void> main() async {
   log('[AEAD] Decrypted text: "${utf8.decode(decryptedPayload)}"');
   log('[AEAD] Decryption Match: ${aeadMatch ? "✅ SUCCESS" : "❌ FAILED"}');
 
-  // XChaCha20-Poly1305: 24-byte random nonce, safe without a counter.
+  // XChaCha20-Poly1305: 24-byte random nonce with a larger collision margin.
   // Wire format: 24-byte nonce || ciphertext+tag.
+  final xKey = await QuantumCrypto.kdf.derive(
+    sharedSecret: hybridEncapsulation.sharedSecret,
+    info: Uint8List.fromList(utf8.encode('example/xchacha20poly1305/v2')),
+    outputLength: 32,
+  );
   final xPayload = Uint8List.fromList(utf8.encode('Extended-nonce secret'));
   final xCiphertext = await QuantumCrypto.aead.encrypt(
     algorithm: AeadAlgorithm.xChaCha20Poly1305,
-    key: symmetricKey,
+    key: xKey,
     plaintext: xPayload,
   );
   log(
@@ -177,7 +210,7 @@ Future<void> main() async {
 
   final xDecrypted = await QuantumCrypto.aead.decrypt(
     algorithm: AeadAlgorithm.xChaCha20Poly1305,
-    key: symmetricKey,
+    key: xKey,
     ciphertextWithNonce: xCiphertext,
   );
   final xMatch = _bytesEquals(xPayload, xDecrypted);
@@ -204,6 +237,7 @@ Future<void> main() async {
   // We use signAndEncrypt as defined in the library
   final securePackage = await QuantumCrypto.messaging.signAndEncrypt(
     message: messageToMostafa,
+    senderDsaPublicKey: dsaKeyPair.publicKey,
     senderDsaSecretKey: dsaKeyPair.secretKey,
     recipientMlKemPublicKey: hybridKeyPair.mlKemPublicKey,
     recipientX25519PublicKey: hybridKeyPair.x25519PublicKey,
@@ -216,6 +250,8 @@ Future<void> main() async {
   final verifiedDecryptedMessage = await QuantumCrypto.messaging
       .decryptAndVerify(
         package: securePackage,
+        recipientMlKemPublicKey: hybridKeyPair.mlKemPublicKey,
+        recipientX25519PublicKey: hybridKeyPair.x25519PublicKey,
         recipientMlKemSecretKey: hybridKeyPair.mlKemSecretKey,
         recipientX25519SecretKey: hybridKeyPair.x25519SecretKey,
         senderDsaPublicKey: dsaKeyPair.publicKey,
@@ -269,9 +305,7 @@ Future<void> main() async {
     outputLength: 64,
     hash: HkdfHash.sha512,
   );
-  log(
-    '[KDF] Derived Key (SHA-512) length: ${derivedKey512.length} bytes',
-  );
+  log('[KDF] Derived Key (SHA-512) length: ${derivedKey512.length} bytes');
 
   // Derive multiple keys in one call.
   final multiKeys = await QuantumCrypto.kdf.deriveMulti(
@@ -333,8 +367,10 @@ Future<void> main() async {
     iterations: 1,
   );
   for (final r in slhBench) {
-    log('[BENCH] ${r.algorithm} ${r.operation}: '
-        '${r.avgUs} μs avg (${r.opsPerSec.toStringAsFixed(1)} ops/sec)');
+    log(
+      '[BENCH] ${r.algorithm} ${r.operation}: '
+      '${r.avgUs} μs avg (${r.opsPerSec.toStringAsFixed(1)} ops/sec)',
+    );
   }
   log('');
 

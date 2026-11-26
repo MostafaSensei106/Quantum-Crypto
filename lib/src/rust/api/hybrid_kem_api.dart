@@ -6,7 +6,7 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `eq`, `fmt`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `eq`, `fmt`, `from`, `from`, `from`
 
 /// Generate a hybrid key pair for `algorithm`.
 Future<HybridKeyPairDto> generateHybridKemKeypair(
@@ -30,13 +30,17 @@ Future<Uint8List> hybridKemDecapsulate(
         required List<int> mlkemCiphertext,
         required List<int> x25519EphemeralPk,
         required List<int> mlkemSecretKey,
-        required List<int> x25519SecretKey}) =>
+        required List<int> x25519SecretKey,
+        required List<int> mlkemPublicKey,
+        required List<int> x25519PublicKey}) =>
     RustLib.instance.api.crateApiHybridKemApiHybridKemDecapsulate(
         algorithm: algorithm,
         mlkemCiphertext: mlkemCiphertext,
         x25519EphemeralPk: x25519EphemeralPk,
         mlkemSecretKey: mlkemSecretKey,
-        x25519SecretKey: x25519SecretKey);
+        x25519SecretKey: x25519SecretKey,
+        mlkemPublicKey: mlkemPublicKey,
+        x25519PublicKey: x25519PublicKey);
 
 /// FFI-safe hybrid encapsulation output.
 class HybridEncapsulationDto {
@@ -100,13 +104,13 @@ class HybridKeyPairDto {
 
 /// Hybrid KEM variant.
 enum TargetHybridKemAlgorithm {
-  /// ML-KEM-512 + X25519 — NIST level 1 + classical.
+  /// ML-KEM-512 + X25519  NIST level 1 + classical.
   mlKem512X25519,
 
-  /// ML-KEM-768 + X25519 — NIST level 3 + classical (recommended default).
+  /// ML-KEM-768 + X25519  NIST level 3 + classical (recommended default).
   mlKem768X25519,
 
-  /// ML-KEM-1024 + X25519 — NIST level 5 + classical.
+  /// ML-KEM-1024 + X25519  NIST level 5 + classical.
   mlKem1024X25519,
   ;
 }

@@ -36,13 +36,15 @@ final
     required AeadAlgorithm algorithm,
     required Uint8List key,
     required Uint8List plaintext,
+    Uint8List? associatedData,
   }) async {
-    final result = await rust_api.aeadEncrypt(
+    final result = await rust_api.aeadEncryptWithAad(
       algorithm: _mapToRustAlgorithm(algorithm),
       key: key,
+      associatedData: associatedData ?? Uint8List(0),
       plaintext: plaintext,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 
   @override
@@ -50,12 +52,14 @@ final
     required AeadAlgorithm algorithm,
     required Uint8List key,
     required Uint8List ciphertextWithNonce,
+    Uint8List? associatedData,
   }) async {
-    final result = await rust_api.aeadDecrypt(
+    final result = await rust_api.aeadDecryptWithAad(
       algorithm: _mapToRustAlgorithm(algorithm),
       key: key,
+      associatedData: associatedData ?? Uint8List(0),
       ciphertextWithNonce: ciphertextWithNonce,
     );
-    return Uint8List.fromList(result);
+    return result;
   }
 }

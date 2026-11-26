@@ -1,4 +1,4 @@
-//! Key encoding utilities (hex / base64) — FFI boundary.
+//! Key encoding utilities (hex / base64)  FFI boundary.
 //!
 //! Pure functions: no key validation is performed here, encoding only.
 
@@ -22,11 +22,23 @@ pub fn hex_to_bytes(hex: String) -> Result<Vec<u8>, String> {
     if !hex.len().is_multiple_of(2) {
         return Err("Hex string has odd length".to_string());
     }
-    (0..hex.len())
-        .step_by(2)
-        .map(|i| {
-            u8::from_str_radix(&hex[i..i + 2], 16)
-                .map_err(|_| format!("Invalid hex character at byte position {}", i / 2))
+    crate::core::security::bounded(hex.len(), crate::core::security::MAX_ENCODED)?;
+    hex.as_bytes()
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .enumerate()
+        .map(|(i, pair)| {
+            let digit = |b: u8| match b {
+                b'0'..=b'9' => Some(b - b'0'),
+                b'a'..=b'f' => Some(b - b'a' + 10),
+                b'A'..=b'F' => Some(b - b'A' + 10),
+                _ => None,
+            };
+            match (digit(pair[0]), digit(pair[1])) {
+                (Some(a), Some(b)) => Ok((a << 4) | b),
+                _ => Err(format!("Invalid hex character at byte position {i}")),
+            }
         })
         .collect()
 }
